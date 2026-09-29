@@ -5,7 +5,14 @@ from datetime import datetime, date, timedelta
 from flask import Flask, render_template, request, jsonify, send_from_directory, redirect, url_for
 from werkzeug.utils import secure_filename
 
-app = Flask(__name__)
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+
+app = Flask(
+    __name__,
+    static_folder=os.path.join(BASE_DIR, 'static'),
+    static_url_path='/static',
+    template_folder=os.path.join(BASE_DIR, 'templates')
+)
 app.config['SECRET_KEY'] = 'avengers-studentos-secret-2026'
 
 # Support both local and Vercel/Serverless read-write paths
@@ -14,7 +21,6 @@ if IS_VERCEL:
     UPLOAD_BASE = '/tmp/uploads'
     DB_PATH = '/tmp/avengers_hq.db'
 else:
-    BASE_DIR = os.path.abspath(os.path.dirname(__file__))
     UPLOAD_BASE = os.path.join(BASE_DIR, 'uploads')
     DB_PATH = os.path.join(BASE_DIR, 'avengers_hq.db')
 
@@ -282,7 +288,9 @@ def seed_initial_data(cursor):
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# ================= PAGES ROUTES =================
+@app.route('/static/<path:filename>')
+def serve_static(filename):
+    return send_from_directory(os.path.join(BASE_DIR, 'static'), filename)
 
 @app.route('/')
 def dashboard():
