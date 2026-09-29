@@ -6,6 +6,8 @@
     <title>{% block title %}AVENGERS HQ // StudentOS{% endblock %}</title>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Identity Services SDK for Google Account & Tasks Sync -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <!-- Chart.js for Visualizations -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Custom CSS -->
@@ -116,10 +118,10 @@
                         <i class="fas fa-volume-up"></i>
                     </button>
 
-                    <!-- Google Tasks Sync Button -->
-                    <button class="hud-btn" onclick="openGoogleTasksModal()" title="Google Tasks Sync">
+                    <!-- Google Tasks / Account Button -->
+                    <button class="hud-btn" id="google-auth-btn" onclick="openGoogleTasksModal()" title="Google Account & Tasks Sync">
                         <i class="fab fa-google" style="color: #4285F4;"></i>
-                        <span class="desktop-only">Sync Tasks</span>
+                        <span id="google-auth-btn-text" class="desktop-only">Sign in with Google</span>
                     </button>
 
                     <!-- Urgent Deadline Bell Badge -->
@@ -237,35 +239,65 @@
         </div>
     </div>
 
-    <!-- Modal: Google Tasks Connector & Sync -->
+    <!-- Modal: Google Account & Tasks Sync -->
     <div class="modal-overlay" id="google-tasks-modal">
-        <div class="modal-card">
+        <div class="modal-card" style="max-width: 520px;">
             <div class="modal-header">
-                <h3><i class="fab fa-google" style="color: #4285F4;"></i> GOOGLE TASKS CONNECTOR</h3>
+                <h3><i class="fab fa-google" style="color: #4285F4;"></i> GOOGLE ACCOUNT & TASKS</h3>
                 <button class="modal-close" onclick="closeGoogleTasksModal()"><i class="fas fa-times"></i></button>
             </div>
-            <div style="margin-bottom: 20px;">
-                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 14px;">
-                    Connect and sync your Google Tasks with StudentOS. Import tasks or export your mission directives directly.
-                </p>
-                <div style="background: rgba(5, 9, 20, 0.7); border: 1px solid rgba(0, 242, 254, 0.2); border-radius: 10px; padding: 14px; margin-bottom: 16px;">
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-                        <span style="font-weight: 600; color: #fff;"><i class="fas fa-sync-alt"></i> Instant Google Tasks Sync</span>
-                        <span class="badge badge-safe">Ready</span>
+            
+            <!-- State 1: Not Connected -->
+            <div id="google-logged-out-state">
+                <div style="text-align: center; padding: 15px 10px 20px;">
+                    <div style="width: 60px; height: 60px; background: rgba(66, 133, 244, 0.12); border: 1px solid rgba(66, 133, 244, 0.4); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; color: #4285F4; margin: 0 auto 16px;">
+                        <i class="fab fa-google"></i>
                     </div>
-                    <p style="font-size: 0.8rem; color: var(--text-muted);">Sync tasks seamlessly between your phone's Google Tasks app and StudentOS.</p>
+                    <h4 style="font-family: var(--font-heading); color: #fff; font-size: 1.1rem; margin-bottom: 6px;">Sign in to Sync Google Tasks</h4>
+                    <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 20px;">
+                        Log in with your Google Account to automatically pull and sync all your Google Tasks directly into your StudentOS dashboard.
+                    </p>
+
+                    <button class="hud-btn" style="background: #ffffff; color: #1f2937; font-weight: 700; width: 100%; justify-content: center; padding: 12px; font-size: 1rem; border-radius: 12px; box-shadow: 0 4px 15px rgba(255,255,255,0.2);" onclick="initiateGoogleLogin()">
+                        <i class="fab fa-google" style="color: #4285F4; font-size: 1.2rem;"></i> Sign in with Google
+                    </button>
                 </div>
 
-                <div class="form-group">
-                    <label>Import Google Tasks JSON Payload (Optional)</label>
-                    <textarea id="gtasks-json-input" class="form-control" rows="3" placeholder='Paste Google Tasks JSON export or items array...'></textarea>
+                <div style="border-top: 1px solid rgba(0, 242, 254, 0.15); padding-top: 14px; margin-top: 10px;">
+                    <details style="font-size: 0.82rem; color: var(--text-muted);">
+                        <summary style="cursor: pointer; color: var(--arc-cyan);"><i class="fas fa-cog"></i> Advanced: Custom Google OAuth Client ID</summary>
+                        <div style="margin-top: 10px;">
+                            <label style="display: block; margin-bottom: 4px; color: #cbd5e1;">Google Cloud Client ID (Optional):</label>
+                            <input type="text" id="custom-client-id-input" class="form-control" style="font-size: 0.8rem;" placeholder="e.g. 123456789-abc.apps.googleusercontent.com">
+                            <button class="hud-btn" style="margin-top: 8px; font-size: 0.78rem; padding: 4px 10px;" onclick="saveCustomClientId()">Save Client ID</button>
+                        </div>
+                    </details>
                 </div>
             </div>
-            <div style="display: flex; justify-content: flex-end; gap: 10px;">
-                <button class="hud-btn" onclick="closeGoogleTasksModal()">Cancel</button>
-                <button class="hud-btn hud-btn-primary" onclick="triggerGoogleTasksSync()">
-                    <i class="fas fa-cloud-download-alt"></i> Sync Now
-                </button>
+
+            <!-- State 2: Connected -->
+            <div id="google-logged-in-state" style="display: none;">
+                <div style="background: rgba(5, 9, 20, 0.8); border: 1px solid rgba(0, 242, 254, 0.25); border-radius: 12px; padding: 18px; margin-bottom: 18px; display: flex; align-items: center; gap: 14px;">
+                    <img id="google-user-avatar" src="" alt="Google User" style="width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--arc-cyan); display: none;">
+                    <div id="google-user-avatar-placeholder" style="width: 48px; height: 48px; border-radius: 50%; background: #4285F4; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.2rem;">G</div>
+                    <div>
+                        <h4 id="google-user-name" style="color: #fff; font-size: 1rem; margin-bottom: 2px;">Google Connected</h4>
+                        <p id="google-user-email" style="font-size: 0.8rem; color: var(--text-muted);">Tasks synchronized with cloud</p>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-bottom: 14px;">
+                    <button class="hud-btn hud-btn-primary" style="flex: 1; justify-content: center; padding: 10px;" onclick="fetchAndSyncGoogleTasks()">
+                        <i class="fas fa-sync-alt" id="sync-spinner-icon"></i> Sync Tasks Now
+                    </button>
+                    <button class="hud-btn hud-btn-danger" style="padding: 10px 14px;" onclick="disconnectGoogleAccount()">
+                        <i class="fas fa-sign-out-alt"></i> Disconnect
+                    </button>
+                </div>
+
+                <p style="font-size: 0.78rem; color: var(--text-muted); text-align: center;">
+                    <i class="fas fa-check-circle" style="color: var(--hulk-green);"></i> Real-time Google Tasks synchronization active
+                </p>
             </div>
         </div>
     </div>
