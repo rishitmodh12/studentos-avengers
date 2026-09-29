@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{% block title %}AVENGERS HQ // StudentOS{% endblock %}</title>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Chart.js for Visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/animations.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation HUD (Desktop) -->
+        <aside class="sidebar">
+            <div>
+                <a href="/" class="brand-logo">
+                    <div class="brand-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <div>
+                        <div class="brand-title">STARK <span>OS</span></div>
+                        <div class="brand-sub">STUDENT INITIATIVE</div>
+                    </div>
+                </a>
+
+                <ul class="nav-menu">
+                    <li>
+                        <a href="/" class="nav-link {% if active_page == 'dashboard' %}active{% endif %}">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Dashboard HUD</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/tasks" class="nav-link {% if active_page == 'tasks' %}active{% endif %}">
+                            <i class="fas fa-check-double"></i>
+                            <span>Google Tasks & Study</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/events" class="nav-link {% if active_page == 'events' %}active{% endif %}">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span>Events & Schedule</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/habits" class="nav-link {% if active_page == 'habits' %}active{% endif %}">
+                            <i class="fas fa-fire"></i>
+                            <span>Habits & Hanuman Chalisa</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/notes" class="nav-link {% if active_page == 'notes' %}active{% endif %}">
+                            <i class="fas fa-sticky-note"></i>
+                            <span>Subject Notes</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/results" class="nav-link {% if active_page == 'results' %}active{% endif %}">
+                            <i class="fas fa-graduation-cap"></i>
+                            <span>Marks & Analytics</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/vault" class="nav-link {% if active_page == 'vault' %}active{% endif %}">
+                            <i class="fas fa-folder-open"></i>
+                            <span>Subject PDF Vault</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/goals" class="nav-link {% if active_page == 'goals' %}active{% endif %}">
+                            <i class="fas fa-bullseye"></i>
+                            <span>Academic Goals</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/focus" class="nav-link {% if active_page == 'focus' %}active{% endif %}">
+                            <i class="fas fa-atom"></i>
+                            <span>Arc Focus Timer</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- JARVIS Status & Quick Hanuman Chalisa Button -->
+            <div class="sidebar-footer">
+                <button class="hud-btn hud-btn-primary" style="width: 100%; margin-bottom: 12px; justify-content: center; font-size: 0.82rem;" onclick="openChalisaModal()">
+                    <i class="fas fa-om"></i> Read Hanuman Chalisa
+                </button>
+                <div class="jarvis-status-card">
+                    <div class="jarvis-pulse"></div>
+                    <div class="jarvis-info">
+                        <h4>J.A.R.V.I.S. ONLINE</h4>
+                        <p>Subsystems Synced</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Top Header Bar -->
+            <header class="top-header">
+                <div class="page-headline">
+                    <h1>{% block page_title %}StudentOS HUD{% endblock %}</h1>
+                    <p>{% block page_subtitle %}Mission tasks, events, and academic hub{% endblock %}</p>
+                </div>
+
+                <div class="top-actions">
+                    <!-- Audio SFX Toggle Button -->
+                    <button class="hud-btn" id="sound-toggle-btn" title="Toggle UI Audio">
+                        <i class="fas fa-volume-up"></i>
+                    </button>
+
+                    <!-- Google Tasks Sync Button -->
+                    <button class="hud-btn" onclick="openGoogleTasksModal()" title="Google Tasks Sync">
+                        <i class="fab fa-google" style="color: #4285F4;"></i>
+                        <span class="desktop-only">Sync Tasks</span>
+                    </button>
+
+                    <!-- Urgent Deadline Bell Badge -->
+                    <div class="bell-wrapper" id="bell-btn" title="Urgent Deadline Alerts">
+                        <button class="hud-btn" style="padding: 8px 12px;">
+                            <i class="fas fa-bell"></i>
+                        </button>
+                        <span class="bell-badge" id="bell-count" style="display: none;">0</span>
+                    </div>
+
+                    {% block header_actions %}{% endblock %}
+                </div>
+            </header>
+
+            <!-- Page Body -->
+            <div class="page-container">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+
+    <!-- Mobile Bottom Navigation Bar -->
+    <nav class="mobile-bottom-nav">
+        <a href="/" class="mobile-nav-item {% if active_page == 'dashboard' %}active{% endif %}">
+            <i class="fas fa-chart-line"></i>
+            <span>HUD</span>
+        </a>
+        <a href="/tasks" class="mobile-nav-item {% if active_page == 'tasks' %}active{% endif %}">
+            <i class="fas fa-check-double"></i>
+            <span>Tasks</span>
+        </a>
+        <a href="/events" class="mobile-nav-item {% if active_page == 'events' %}active{% endif %}">
+            <i class="fas fa-calendar-alt"></i>
+            <span>Events</span>
+        </a>
+        <a href="/habits" class="mobile-nav-item {% if active_page == 'habits' %}active{% endif %}">
+            <i class="fas fa-fire"></i>
+            <span>Habits</span>
+        </a>
+        <a href="/vault" class="mobile-nav-item {% if active_page == 'vault' %}active{% endif %}">
+            <i class="fas fa-folder-open"></i>
+            <span>Vault</span>
+        </a>
+        <a href="/results" class="mobile-nav-item {% if active_page == 'results' %}active{% endif %}">
+            <i class="fas fa-graduation-cap"></i>
+            <span>Marks</span>
+        </a>
+    </nav>
+
+    <!-- Modal: Hanuman Chalisa Recitation Deck -->
+    <div class="modal-overlay" id="chalisa-modal">
+        <div class="modal-card" style="max-width: 650px; max-height: 85vh;">
+            <div class="modal-header">
+                <h3 style="color: var(--stark-gold);"><i class="fas fa-om"></i> SHREE HANUMAN CHALISA</h3>
+                <button class="modal-close" onclick="closeChalisaModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <div style="background: rgba(5, 9, 20, 0.8); border: 1px solid var(--stark-gold); border-radius: 12px; padding: 20px; font-family: 'Inter', sans-serif; line-height: 1.8; color: #fff; max-height: 55vh; overflow-y: auto;">
+                <div style="text-align: center; margin-bottom: 16px;">
+                    <h4 style="color: var(--stark-gold); font-size: 1.15rem;">॥ दोहा ॥</h4>
+                    <p style="color: #cbd5e1;">श्रीगुरु चरन सरोज रज, निज मनु मुकुरु सुधारि।<br>बरनऊँ रघुबर बिमल जसु, जो दायकु फल चारि॥</p>
+                    <p style="color: #cbd5e1; margin-top: 8px;">बुद्धिहीन तनु जानिके, सुमिरौं पवन-कुमार।<br>बल बुद्धि बिद्या देहु मोहिं, हरहु कलेस बिकार॥</p>
+                    
+                    <h4 style="color: var(--stark-gold); font-size: 1.15rem; margin-top: 16px;">॥ चौपाई ॥</h4>
+                    <p style="color: #cbd5e1;">जय हनुमान ज्ञान गुन सागर। जय कपीस तिहुँ लोक उजागर॥<br>
+                    राम दूत अतुलित बल धामा। अंजनि-पुत्र पवनसुत नामा॥<br>
+                    महाबीर बिक्रम बजरंगी। कुमति निवार सुमति के संगी॥<br>
+                    कंचन बरन बिराज सुबेसा। कानन कुंडल कुंचित केसा॥<br>
+                    हाथ बज्र औ ध्वजा बिराजै। काँधे मूँज जनेऊ साजै॥<br>
+                    संकर सुवन केसरीनंदन। तेज प्रताप महा जग बन्दन॥<br>
+                    विद्यावान गुनी अति चातुर। राम काज करिबे को आतुर॥<br>
+                    प्रभु चरित्र सुनिबे को रसिया। राम लखन सीता मन बसिया॥<br>
+                    सूक्ष्म रूप धरि सियहिं दिखावा। बिकट रूप धरि लंक जरावा॥<br>
+                    भीम रूप धरि असुर सँहारे। रामचंद्र के काज संवारे॥<br>
+                    लाय सजीवन लखन जियाये। श्रीरघुबीर हरषि उर लाये॥<br>
+                    रघुपति कीन्ही बहुत बड़ाई। तुम मम प्रिय भरतहि सम भाई॥<br>
+                    सहस बदन तुम्हरो जस गावैं। अस कहि श्रीपति कंठ लगावैं॥<br>
+                    सनकादिक ब्रह्मादि मुनीसा। नारद सारद सहित अहीसा॥<br>
+                    जम कुबेर दिगपाल जहाँ ते। कबि कोबिद कहि सके कहाँ ते॥<br>
+                    तुम उपकार सुग्रीवहिं कीन्हा। राम मिलाय राज पद दीन्हा॥<br>
+                    तुम्हरो मंत्र बिभीषन माना। लंकेस्वर भए सब जग जाना॥<br>
+                    जुग सहस्र जोजन पर भानु। लील्यो ताहि मधुर फल जानू॥<br>
+                    प्रभु मुद्रिका मेलि मुख माहीं। जलधि लाँघि गये अचरज नाहीं॥<br>
+                    दुर्गम काज जगत के जेते। सुगम अनुग्रह तुम्हरे तेते॥<br>
+                    राम दुआरे तुम रखवारे। होत न आज्ञा बिनु पैसारे॥<br>
+                    सब सुख लहै तुम्हारी सरना। तुम रक्षक काहू को डर ना॥<br>
+                    आपन तेज सम्हारो आपै। तीनों लोक हाँक तें काँपै॥<br>
+                    भूत पिसाच निकट नहिं आवै। महाबीर जब नाम सुनावै॥<br>
+                    नासै रोग हरै सब पीरा। जपत निरंतर हनुमत बीरा॥<br>
+                    संकट तें हनुमान छुड़ावै। मन क्रम बचन ध्यान जो लावै॥<br>
+                    सब पर राम तपस्वी राजा। तिन के काज सकल तुम साजा॥<br>
+                    और मनोरथ जो कोई लावै। सोइ अमित जीवन फल पावै॥<br>
+                    चारों जुग परताप तुम्हारा। है परसिद्ध जगत उजियारा॥<br>
+                    साधु संत के तुम रखवारे। असुर निकंदन राम दुलारे॥<br>
+                    अष्ट सिद्धि नौ निधि के दाता। अस बर दीन जानकी माता॥<br>
+                    राम रसायन तुम्हरे पासा। सदा रहो रघुपति के दासा॥<br>
+                    तुम्हरे भजन राम को पावै। जनम जनम के दुख बिसरावै॥<br>
+                    अंत काल रघुबर पुर जाई। जहाँ जन्म हरि-भक्त कहाई॥<br>
+                    और देवता चित्त न धरई। हनुमत सेइ सर्ब सुख करई॥<br>
+                    संकट कटै मिटै सब पीरा। जो सुमिरै हनुमत बलबीरा॥<br>
+                    जै जै जै हनुमान गोसाईं। कृपा करहु गुरुदेव की नाईं॥<br>
+                    जो सत बार पाठ कर कोई। छूटहि बंदि महा सुख होई॥<br>
+                    जो यह पढ़ै हनुमान चालीसा। होय सिद्धि साखी गौरीसा॥<br>
+                    तुलसीदास सदा हरि चेरा। कीजै नाथ हृदय मँह डेरा॥</p>
+
+                    <h4 style="color: var(--stark-gold); font-size: 1.15rem; margin-top: 16px;">॥ दोहा ॥</h4>
+                    <p style="color: #cbd5e1;">पवनतनय संकट हरन, मंगल मूरति रूप।<br>राम लखन सीता सहित, हृदय बसहु सुर भूप॥</p>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px;">
+                <button class="hud-btn" onclick="closeChalisaModal()">Close</button>
+                <button class="hud-btn hud-btn-primary" onclick="markChalisaDoneToday()">
+                    <i class="fas fa-check-circle"></i> Mark Done For Today (+1 Streak 🔥)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Google Tasks Connector & Sync -->
+    <div class="modal-overlay" id="google-tasks-modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i class="fab fa-google" style="color: #4285F4;"></i> GOOGLE TASKS CONNECTOR</h3>
+                <button class="modal-close" onclick="closeGoogleTasksModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 14px;">
+                    Connect and sync your Google Tasks with StudentOS. Import tasks or export your mission directives directly.
+                </p>
+                <div style="background: rgba(5, 9, 20, 0.7); border: 1px solid rgba(0, 242, 254, 0.2); border-radius: 10px; padding: 14px; margin-bottom: 16px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="font-weight: 600; color: #fff;"><i class="fas fa-sync-alt"></i> Instant Google Tasks Sync</span>
+                        <span class="badge badge-safe">Ready</span>
+                    </div>
+                    <p style="font-size: 0.8rem; color: var(--text-muted);">Sync tasks seamlessly between your phone's Google Tasks app and StudentOS.</p>
+                </div>
+
+                <div class="form-group">
+                    <label>Import Google Tasks JSON Payload (Optional)</label>
+                    <textarea id="gtasks-json-input" class="form-control" rows="3" placeholder='Paste Google Tasks JSON export or items array...'></textarea>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button class="hud-btn" onclick="closeGoogleTasksModal()">Cancel</button>
+                <button class="hud-btn hud-btn-primary" onclick="triggerGoogleTasksSync()">
+                    <i class="fas fa-cloud-download-alt"></i> Sync Now
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container"></div>
+
+    <!-- Core Scripts -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

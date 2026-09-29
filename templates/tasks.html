@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+
+{% block title %}Google Tasks HQ // AVENGERS HQ{% endblock %}
+{% block page_title %}MISSION TASK PROTOCOLS{% endblock %}
+{% block page_subtitle %}Google Tasks enhanced interface with tactical subtasks, deadline alerts & priority tags{% endblock %}
+
+{% block extra_css %}
+<style>
+    .category-pills-bar {
+        display: flex;
+        gap: 10px;
+        overflow-x: auto;
+        padding-bottom: 8px;
+        margin-bottom: 20px;
+    }
+
+    .category-pill {
+        background: rgba(13, 20, 36, 0.8);
+        border: 1px solid rgba(0, 242, 254, 0.2);
+        color: var(--text-muted);
+        padding: 7px 16px;
+        border-radius: 20px;
+        font-family: var(--font-sub);
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: var(--transition-smooth);
+        white-space: nowrap;
+    }
+
+    .category-pill:hover, .category-pill.active {
+        background: rgba(0, 242, 254, 0.18);
+        border-color: var(--arc-cyan);
+        color: #fff;
+        box-shadow: 0 0 10px rgba(0, 242, 254, 0.3);
+    }
+
+    .subtask-progress-bar {
+        height: 4px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 2px;
+        overflow: hidden;
+        margin-bottom: 6px;
+        max-width: 300px;
+    }
+
+    .subtask-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--arc-cyan), var(--hulk-green));
+        transition: width 0.3s ease;
+    }
+</style>
+{% endblock %}
+
+{% block header_actions %}
+<button class="hud-btn hud-btn-primary" onclick="openTaskModal()">
+    <i class="fas fa-plus"></i> Initialize New Task
+</button>
+{% endblock %}
+
+{% block content %}
+<!-- Search & Filter Control Bar -->
+<div class="stark-card" style="padding: 16px 20px; margin-bottom: 24px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+        <!-- Search -->
+        <div style="position: relative; flex: 1; min-width: 250px;">
+            <i class="fas fa-search" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+            <input type="text" id="task-search" class="form-control" style="padding-left: 40px;" placeholder="Search missions, descriptions, or subtasks...">
+        </div>
+
+        <!-- Filter Buttons -->
+        <div style="display: flex; gap: 8px;">
+            <button class="hud-btn active" data-task-filter="all">All Tasks</button>
+            <button class="hud-btn" data-task-filter="urgent">
+                <i class="fas fa-fire" style="color: var(--stark-red);"></i> Urgent / Near
+            </button>
+            <button class="hud-btn" data-task-filter="pending">Pending</button>
+            <button class="hud-btn" data-task-filter="completed">Completed</button>
+        </div>
+    </div>
+</div>
+
+<!-- Dynamic Category Filter Pills -->
+<div class="category-pills-bar" id="category-pills"></div>
+
+<!-- Task List Container -->
+<div id="tasks-container"></div>
+
+<!-- Empty State -->
+<div id="tasks-empty" class="stark-card" style="text-align: center; padding: 40px 20px; display: none;">
+    <div style="font-size: 3rem; color: var(--arc-cyan); margin-bottom: 12px; opacity: 0.8;">
+        <i class="fas fa-clipboard-check"></i>
+    </div>
+    <h3 style="font-family: var(--font-heading); color: #fff; margin-bottom: 8px;">No Mission Tasks Found</h3>
+    <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 20px;">Your task slate is clean, or matching filters returned zero results.</p>
+    <button class="hud-btn hud-btn-primary" onclick="openTaskModal()">
+        <i class="fas fa-plus"></i> Create Mission Directive
+    </button>
+</div>
+
+<!-- Modal: New Task Form -->
+<div class="modal-overlay" id="task-modal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3><i class="fas fa-shield-virus"></i> INITIALIZE MISSION DIRECTIVE</h3>
+            <button class="modal-close" onclick="closeTaskModal()"><i class="fas fa-times"></i></button>
+        </div>
+
+        <form id="new-task-form">
+            <div class="form-group">
+                <label for="task-title-input">Mission Title *</label>
+                <input type="text" id="task-title-input" class="form-control" placeholder="e.g. Complete Quantum Physics Assignment" required>
+            </div>
+
+            <div class="form-group">
+                <label for="task-desc-input">Description / Strategic Notes</label>
+                <textarea id="task-desc-input" class="form-control" rows="3" placeholder="Add specific objectives, formulas or references..."></textarea>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="task-cat-input">Category / Sector</label>
+                    <input type="text" id="task-cat-input" class="form-control" placeholder="e.g. Studies, Coding, Personal" list="category-options">
+                    <datalist id="category-options">
+                        <option value="Studies">
+                        <option value="Assignments">
+                        <option value="Coding & AI">
+                        <option value="Exams">
+                        <option value="Avengers Protocol">
+                        <option value="Personal">
+                    </datalist>
+                </div>
+
+                <div class="form-group">
+                    <label for="task-priority-input">Tactical Priority</label>
+                    <select id="task-priority-input" class="form-control">
+                        <option value="High">🔴 High Priority</option>
+                        <option value="Medium" selected>🟡 Medium Priority</option>
+                        <option value="Low">🔵 Low Priority</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="task-date-input"><i class="fas fa-calendar-alt"></i> Deadline Date</label>
+                    <input type="date" id="task-date-input" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="task-time-input"><i class="fas fa-clock"></i> Deadline Time</label>
+                    <input type="time" id="task-time-input" class="form-control" value="23:59">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="task-subtasks-input">Subtasks (One per line)</label>
+                <textarea id="task-subtasks-input" class="form-control" rows="3" placeholder="Step 1: Read syllabus&#10;Step 2: Solve 10 questions&#10;Step 3: Submit draft"></textarea>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+                <button type="button" class="hud-btn" onclick="closeTaskModal()">Cancel</button>
+                <button type="submit" class="hud-btn hud-btn-primary">
+                    <i class="fas fa-check"></i> Launch Directive
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/tasks.js') }}"></script>
+{% endblock %}

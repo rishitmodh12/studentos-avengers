@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+
+{% block title %}Academic Results & Marks // AVENGERS HQ{% endblock %}
+{% block page_title %}ACADEMIC RESULTS & MARKS VAULT{% endblock %}
+{% block page_subtitle %}Record exam scores, track semester progression & compute academic statistics{% endblock %}
+
+{% block header_actions %}
+<button class="hud-btn hud-btn-primary" onclick="openResultModal()">
+    <i class="fas fa-plus"></i> Record New Result
+</button>
+{% endblock %}
+
+{% block content %}
+<!-- Academic Stats Summary -->
+<div class="stat-grid">
+    <div class="stark-card stat-tile">
+        <div class="stat-icon icon-cyan">
+            <i class="fas fa-percentage"></i>
+        </div>
+        <div class="stat-info">
+            <h3 id="marks-avg-pct">0%</h3>
+            <p>Overall Percentage</p>
+        </div>
+    </div>
+
+    <div class="stark-card stat-tile">
+        <div class="stat-icon icon-gold">
+            <i class="fas fa-scroll"></i>
+        </div>
+        <div class="stat-info">
+            <h3 id="marks-total-exams">0</h3>
+            <p>Recorded Exams</p>
+        </div>
+    </div>
+
+    <div class="stark-card stat-tile">
+        <div class="stat-icon icon-purple">
+            <i class="fas fa-trophy"></i>
+        </div>
+        <div class="stat-info">
+            <h3 id="marks-highest" style="font-size: 1.15rem; word-break: break-word;">N/A</h3>
+            <p>Top Performance</p>
+        </div>
+    </div>
+</div>
+
+<!-- Performance Trajectory Chart -->
+<div class="stark-card" style="margin-bottom: 30px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+        <h3 style="font-family: var(--font-heading); font-size: 1.1rem; color: var(--arc-cyan);">
+            <i class="fas fa-chart-area"></i> ACADEMIC TRAJECTORY ANALYSIS
+        </h3>
+        <span class="badge badge-safe">JARVIS Analytics Active</span>
+    </div>
+    <div style="height: 300px; width: 100%;">
+        <canvas id="marksChart"></canvas>
+    </div>
+</div>
+
+<!-- Results Data Table -->
+<div class="stark-card" style="padding: 0; overflow: hidden;">
+    <div style="padding: 20px 24px; border-bottom: 1px solid rgba(0, 242, 254, 0.15); display: flex; align-items: center; justify-content: space-between;">
+        <h3 style="font-family: var(--font-heading); font-size: 1.1rem; color: #fff;">
+            <i class="fas fa-table"></i> EXAMINATION SCORE LOG
+        </h3>
+    </div>
+
+    <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+            <thead>
+                <tr style="background: rgba(5, 9, 20, 0.8); border-bottom: 1px solid rgba(0, 242, 254, 0.2); font-family: var(--font-sub); font-size: 0.9rem; color: var(--arc-cyan);">
+                    <th style="padding: 14px 16px;">EXAM NAME</th>
+                    <th style="padding: 14px 16px;">SUBJECT</th>
+                    <th style="padding: 14px 16px;">SEMESTER / TERM</th>
+                    <th style="padding: 14px 16px;">SCORE</th>
+                    <th style="padding: 14px 16px;">PERCENTAGE</th>
+                    <th style="padding: 14px 16px;">GRADE</th>
+                    <th style="padding: 14px 16px;">DATE</th>
+                    <th style="padding: 14px 16px;">REMARKS</th>
+                    <th style="padding: 14px 16px; text-align: right;">ACTION</th>
+                </tr>
+            </thead>
+            <tbody id="results-tbody"></tbody>
+        </table>
+    </div>
+
+    <div id="results-empty" style="text-align: center; padding: 40px; display: none;">
+        <i class="fas fa-graduation-cap" style="font-size: 3rem; color: var(--arc-cyan); margin-bottom: 10px; opacity: 0.7;"></i>
+        <h4 style="font-family: var(--font-heading); color: #fff;">No Exam Records Found</h4>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 16px;">Archive your first exam results to unlock performance trajectory charts.</p>
+        <button class="hud-btn hud-btn-primary" onclick="openResultModal()">
+            <i class="fas fa-plus"></i> Add First Result
+        </button>
+    </div>
+</div>
+
+<!-- Modal: New Result Record Form -->
+<div class="modal-overlay" id="result-modal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3><i class="fas fa-file-invoice"></i> RECORD EXAM RESULTS</h3>
+            <button class="modal-close" onclick="closeResultModal()"><i class="fas fa-times"></i></button>
+        </div>
+
+        <form id="new-result-form">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="exam-name-input">Exam / Assessment Name *</label>
+                    <input type="text" id="exam-name-input" class="form-control" placeholder="e.g. Mid-Term, Final Sem 2026, 12th Board" required>
+                </div>
+                <div class="form-group">
+                    <label for="subject-name-input">Subject Name *</label>
+                    <input type="text" id="subject-name-input" class="form-control" placeholder="e.g. Mathematics, AI, Physics" required>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="semester-input">Semester / Year / Term</label>
+                    <input type="text" id="semester-input" class="form-control" placeholder="e.g. Semester 1, Term 2, Year 2026">
+                </div>
+                <div class="form-group">
+                    <label for="exam-date-input">Exam Date</label>
+                    <input type="date" id="exam-date-input" class="form-control">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="marks-obtained-input">Marks Obtained *</label>
+                    <input type="number" step="0.1" id="marks-obtained-input" class="form-control" placeholder="e.g. 92" required>
+                </div>
+                <div class="form-group">
+                    <label for="max-marks-input">Maximum Marks *</label>
+                    <input type="number" step="0.1" id="max-marks-input" class="form-control" value="100" required>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="grade-input">Grade (Optional - Auto calculated)</label>
+                    <input type="text" id="grade-input" class="form-control" placeholder="e.g. A+, O, A">
+                </div>
+                <div class="form-group">
+                    <label for="remarks-input">Remarks / Feedback</label>
+                    <input type="text" id="remarks-input" class="form-control" placeholder="e.g. Scored highest in calculus">
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+                <button type="button" class="hud-btn" onclick="closeResultModal()">Cancel</button>
+                <button type="submit" class="hud-btn hud-btn-primary">
+                    <i class="fas fa-save"></i> Save Record
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/marks.js') }}"></script>
+{% endblock %}

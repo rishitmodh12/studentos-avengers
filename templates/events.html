@@ -1,0 +1,253 @@
+{% extends 'base.html' %}
+
+{% block title %}Events & Schedule // AVENGERS HQ{% endblock %}
+{% block page_title %}SCHEDULE & EVENTS CALENDAR{% endblock %}
+{% block page_subtitle %}Keep track of classes, extracurricular events, and study blocks separately from assignments{% endblock %}
+
+{% block header_actions %}
+<button class="hud-btn hud-btn-primary" onclick="openEventModal()">
+    <i class="fas fa-plus"></i> Add Event / Class
+</button>
+{% endblock %}
+
+{% block content %}
+<!-- Filter Tabs -->
+<div class="stark-card" style="padding: 14px 20px; margin-bottom: 24px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;">
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button class="hud-btn active" data-event-filter="all">All Items</button>
+            <button class="hud-btn" data-event-filter="Class"><i class="fas fa-chalkboard-teacher" style="color: var(--arc-cyan);"></i> Classes</button>
+            <button class="hud-btn" data-event-filter="Event"><i class="fas fa-calendar-check" style="color: var(--stark-red);"></i> Events</button>
+            <button class="hud-btn" data-event-filter="Study Block"><i class="fas fa-book-reader" style="color: var(--vibranium-purple);"></i> Study Blocks</button>
+        </div>
+        <div>
+            <input type="date" id="event-date-filter" class="form-control" style="width: auto; padding: 6px 12px; font-size: 0.85rem;" onchange="filterEventsByDate(this.value)">
+        </div>
+    </div>
+</div>
+
+<!-- Events Timeline / List -->
+<div id="events-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 18px;"></div>
+
+<!-- Empty State -->
+<div id="events-empty" class="stark-card" style="text-align: center; padding: 40px; display: none;">
+    <i class="fas fa-calendar-times" style="font-size: 3rem; color: var(--arc-cyan); margin-bottom: 12px; opacity: 0.7;"></i>
+    <h3 style="font-family: var(--font-heading); color: #fff;">No Schedule Events Found</h3>
+    <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 18px;">No classes or events scheduled for this view.</p>
+    <button class="hud-btn hud-btn-primary" onclick="openEventModal()">
+        <i class="fas fa-plus"></i> Schedule New Event
+    </button>
+</div>
+
+<!-- Modal: Add Event -->
+<div class="modal-overlay" id="event-modal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3><i class="fas fa-calendar-plus"></i> SCHEDULE NEW EVENT / CLASS</h3>
+            <button class="modal-close" onclick="closeEventModal()"><i class="fas fa-times"></i></button>
+        </div>
+
+        <form id="new-event-form">
+            <div class="form-group">
+                <label for="event-title-input">Title / Name *</label>
+                <input type="text" id="event-title-input" class="form-control" placeholder="e.g. Quantum Physics Lecture or Hackathon Briefing" required>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="event-type-input">Type</label>
+                    <select id="event-type-input" class="form-control">
+                        <option value="Class">Class / Lecture</option>
+                        <option value="Event">Event / Extracurricular</option>
+                        <option value="Study Block">Study Block</option>
+                        <option value="Meeting">Meeting</option>
+                        <option value="Workshop">Workshop</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="event-subject-input">Subject / Domain</label>
+                    <input type="text" id="event-subject-input" class="form-control" placeholder="e.g. Physics, AI, Robotics">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="event-date-input">Date *</label>
+                    <input type="date" id="event-date-input" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="event-color-input">Color Tag</label>
+                    <select id="event-color-input" class="form-control">
+                        <option value="#00f2fe">Cyan (Arc Blue)</option>
+                        <option value="#ffb703">Gold (Stark Gold)</option>
+                        <option value="#ff2a4d">Red (Crimson)</option>
+                        <option value="#9d4edd">Purple (Vibranium)</option>
+                        <option value="#00e676">Green (Hulk)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="event-start-input">Start Time</label>
+                    <input type="time" id="event-start-input" class="form-control" value="09:00">
+                </div>
+                <div class="form-group">
+                    <label for="event-end-input">End Time</label>
+                    <input type="time" id="event-end-input" class="form-control" value="10:30">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="event-location-input">Location / Room / Link</label>
+                <input type="text" id="event-location-input" class="form-control" placeholder="e.g. Hall A-102 or Google Meet">
+            </div>
+
+            <div class="form-group">
+                <label for="event-notes-input">Notes / Preparation Checklist</label>
+                <textarea id="event-notes-input" class="form-control" rows="2" placeholder="Bring formula sheet and calculator..."></textarea>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px;">
+                <button type="button" class="hud-btn" onclick="closeEventModal()">Cancel</button>
+                <button type="submit" class="hud-btn hud-btn-primary">
+                    <i class="fas fa-check"></i> Save Event
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let allEvents = [];
+let activeEventType = 'all';
+
+async function fetchEvents() {
+    try {
+        const res = await fetch('/api/events');
+        allEvents = await res.json();
+        renderEvents();
+    } catch (e) {
+        showToast('Error', 'Unable to fetch events', 'danger');
+    }
+}
+
+function renderEvents() {
+    const grid = document.getElementById('events-grid');
+    const empty = document.getElementById('events-empty');
+    if (!grid) return;
+
+    let filtered = allEvents.filter(ev => {
+        if (activeEventType !== 'all' && ev.event_type !== activeEventType) return false;
+        return true;
+    });
+
+    if (filtered.length === 0) {
+        grid.innerHTML = '';
+        if (empty) empty.style.display = 'block';
+        return;
+    }
+
+    if (empty) empty.style.display = 'none';
+
+    grid.innerHTML = filtered.map(ev => `
+        <div class="stark-card" style="border-left: 4px solid ${ev.color_code || '#00f2fe'};">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                <span class="badge" style="background: rgba(0, 242, 254, 0.15); color: #fff; border: 1px solid ${ev.color_code || '#00f2fe'};">
+                    ${ev.event_type}
+                </span>
+                <span style="font-size: 0.8rem; color: var(--stark-gold);"><i class="fas fa-calendar-day"></i> ${ev.event_date}</span>
+            </div>
+
+            <h4 style="font-size: 1.1rem; font-weight: 600; color: #fff; margin-bottom: 6px;">${ev.title}</h4>
+            
+            <div style="display: flex; align-items: center; gap: 14px; font-size: 0.85rem; color: var(--arc-cyan); margin-bottom: 8px;">
+                <span><i class="fas fa-clock"></i> ${ev.start_time || 'TBD'} - ${ev.end_time || 'TBD'}</span>
+                ${ev.location ? `<span><i class="fas fa-map-marker-alt"></i> ${ev.location}</span>` : ''}
+            </div>
+
+            ${ev.subject ? `<p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 6px;"><i class="fas fa-tag"></i> Subject: ${ev.subject}</p>` : ''}
+            ${ev.notes ? `<p style="font-size: 0.82rem; color: #cbd5e1; margin-bottom: 12px; background: rgba(5,9,20,0.5); padding: 6px 10px; border-radius: 6px;">${ev.notes}</p>` : ''}
+
+            <div style="display: flex; justify-content: flex-end; border-top: 1px solid rgba(0,242,254,0.1); padding-top: 10px;">
+                <button class="hud-btn hud-btn-danger" style="padding: 4px 10px; font-size: 0.8rem;" onclick="deleteEvent(${ev.id})">
+                    <i class="fas fa-trash-alt"></i> Delete
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+async function handleAddEvent(e) {
+    e.preventDefault();
+    const title = document.getElementById('event-title-input').value.trim();
+    const event_type = document.getElementById('event-type-input').value;
+    const subject = document.getElementById('event-subject-input').value.trim();
+    const event_date = document.getElementById('event-date-input').value;
+    const color_code = document.getElementById('event-color-input').value;
+    const start_time = document.getElementById('event-start-input').value;
+    const end_time = document.getElementById('event-end-input').value;
+    const location = document.getElementById('event-location-input').value.trim();
+    const notes = document.getElementById('event-notes-input').value.trim();
+
+    try {
+        const res = await fetch('/api/events', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title, event_type, subject, event_date, color_code, start_time, end_time, location, notes })
+        });
+        if (res.ok) {
+            closeEventModal();
+            document.getElementById('new-event-form').reset();
+            showToast('Event Scheduled', 'Entry added to schedule matrix.', 'success');
+            fetchEvents();
+        }
+    } catch (e) {
+        showToast('Error', 'Failed to schedule event', 'danger');
+    }
+}
+
+async function deleteEvent(id) {
+    if (!confirm('Remove this event from schedule?')) return;
+    try {
+        const res = await fetch(`/api/events/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+            showToast('Event Removed', 'Schedule entry wiped.', 'warning');
+            fetchEvents();
+        }
+    } catch (e) {
+        showToast('Error', 'Could not delete event', 'danger');
+    }
+}
+
+function openEventModal() {
+    const modal = document.getElementById('event-modal');
+    if (modal) {
+        modal.classList.add('active');
+        document.getElementById('event-date-input').value = new Date().toISOString().split('T')[0];
+    }
+}
+
+function closeEventModal() {
+    const modal = document.getElementById('event-modal');
+    if (modal) modal.classList.remove('active');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    fetchEvents();
+    const form = document.getElementById('new-event-form');
+    if (form) form.addEventListener('submit', handleAddEvent);
+
+    document.querySelectorAll('[data-event-filter]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('[data-event-filter]').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            activeEventType = btn.dataset.eventFilter;
+            renderEvents();
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,356 @@
+{% extends 'base.html' %}
+
+{% block title %}Command Deck HUD // AVENGERS HQ{% endblock %}
+{% block page_title %}STUDENT COMMAND HUD{% endblock %}
+{% block page_subtitle %}Mission control: schedule, deadlines, habits, and daily inspiration{% endblock %}
+
+{% block header_actions %}
+<a href="/tasks" class="hud-btn hud-btn-primary">
+    <i class="fas fa-plus"></i> New Task
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- Daily Motivational Hero Banner (Virat Kohli / Raj Shamani / Legends) with Feedback Engine -->
+<div class="quote-banner" id="quote-hero-card">
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 4px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <i class="fas fa-quote-left" style="color: var(--stark-gold); font-size: 1.2rem;"></i>
+            <span class="quote-author-tag" id="quote-category-tag">DAILY WARRIOR MOTIVATION</span>
+        </div>
+        <div style="display: flex; gap: 6px;">
+            <button class="hud-btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="loadNewQuote()" title="Cycle Next Quote">
+                <i class="fas fa-sync-alt"></i> Next Quote
+            </button>
+            <button class="hud-btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="openSuggestQuoteModal()" title="Suggest a Quote">
+                <i class="fas fa-plus"></i> Add Quote
+            </button>
+        </div>
+    </div>
+
+    <p class="quote-text" id="quote-text-display">"Self-belief and hard work will always earn you success. Whatever you want to do, do with full passion."</p>
+    <div style="text-align: right; font-size: 0.88rem; color: var(--stark-gold); font-weight: 600;" id="quote-author-display">— Virat Kohli</div>
+
+    <!-- Interactive Feedback Bar -->
+    <div class="quote-feedback-bar">
+        <span style="font-size: 0.8rem; color: var(--text-muted);"><i class="fas fa-comment-dots"></i> How does this quote motivate you today?</span>
+        <div style="display: flex; gap: 8px; align-items: center;">
+            <button class="hud-btn" style="padding: 3px 8px; font-size: 0.78rem;" onclick="rateQuote(5, 'Super Inspiring 🔥')">🔥 Fired Up</button>
+            <button class="hud-btn" style="padding: 3px 8px; font-size: 0.78rem;" onclick="rateQuote(4, 'Good Focus')">👍 Focused</button>
+            <button class="hud-btn" style="padding: 3px 8px; font-size: 0.78rem;" onclick="openQuoteFeedbackModal()">✍ Give Feedback</button>
+        </div>
+    </div>
+</div>
+
+<!-- Urgent Deadline Alert Banner -->
+<div id="urgent-deadline-alert" class="proximity-banner" style="display: none;">
+    <div class="banner-left">
+        <div class="banner-icon"><i class="fas fa-radiation"></i></div>
+        <div class="banner-text">
+            <h4>CRITICAL MISSION DEADLINE WARNING</h4>
+            <p id="urgent-alert-text">You have missions due within 24 hours.</p>
+        </div>
+    </div>
+    <a href="/tasks" class="hud-btn hud-btn-danger">
+        <i class="fas fa-crosshairs"></i> View Urgent
+    </a>
+</div>
+
+<!-- Key Stat Counters -->
+<div class="stat-grid">
+    <div class="stark-card stat-tile">
+        <div class="stat-icon icon-gold">
+            <i class="fas fa-fire"></i>
+        </div>
+        <div class="stat-info">
+            <h3 id="stat-study-streak">0 Days</h3>
+            <p>Discipline Streak</p>
+        </div>
+    </div>
+
+    <div class="stark-card stat-tile">
+        <div class="stat-icon icon-cyan">
+            <i class="fas fa-tasks"></i>
+        </div>
+        <div class="stat-info">
+            <h3 id="stat-pending-tasks">0</h3>
+            <p>Tasks Due</p>
+        </div>
+    </div>
+
+    <div class="stark-card stat-tile">
+        <div class="stat-icon icon-purple">
+            <i class="fas fa-calendar-check"></i>
+        </div>
+        <div class="stat-info">
+            <h3 id="stat-today-events">0</h3>
+            <p>Today's Schedule</p>
+        </div>
+    </div>
+
+    <div class="stark-card stat-tile">
+        <div class="stat-icon icon-red">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="stat-info">
+            <h3 id="stat-completed-tasks">0</h3>
+            <p>Completed Missions</p>
+        </div>
+    </div>
+</div>
+
+<!-- Two-Column Layout: Left = Today's Schedule & Events, Right = Today's Study Tasks -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+    <!-- Column 1: Today's Schedule & Classes -->
+    <div class="stark-card">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; border-bottom: 1px solid rgba(0,242,254,0.15); padding-bottom: 10px;">
+            <h3 style="font-family: var(--font-heading); font-size: 1.05rem; color: var(--arc-cyan);">
+                <i class="fas fa-calendar-day"></i> TODAY'S SCHEDULE & EVENTS
+            </h3>
+            <a href="/events" class="hud-btn" style="padding: 4px 8px; font-size: 0.8rem;">Schedule View</a>
+        </div>
+
+        <div id="today-events-list">
+            <p style="color: var(--text-muted); font-size: 0.85rem;">Scanning today's agenda...</p>
+        </div>
+    </div>
+
+    <!-- Column 2: Today's Study & Assignments -->
+    <div class="stark-card">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; border-bottom: 1px solid rgba(0,242,254,0.15); padding-bottom: 10px;">
+            <h3 style="font-family: var(--font-heading); font-size: 1.05rem; color: var(--stark-red);">
+                <i class="fas fa-bolt"></i> PRIORITY STUDY DIRECTIVES
+            </h3>
+            <a href="/tasks" class="hud-btn" style="padding: 4px 8px; font-size: 0.8rem;">Task HQ</a>
+        </div>
+
+        <div id="today-urgent-tasks-list">
+            <p style="color: var(--text-muted); font-size: 0.85rem;">Scanning tasks...</p>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Quote Feedback -->
+<div class="modal-overlay" id="quote-feedback-modal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3><i class="fas fa-comment-alt"></i> QUOTE FEEDBACK & SUGGESTIONS</h3>
+            <button class="modal-close" onclick="closeQuoteFeedbackModal()"><i class="fas fa-times"></i></button>
+        </div>
+        <form id="quote-feedback-form">
+            <div class="form-group">
+                <label>Rating (1 to 5 Stars)</label>
+                <select id="quote-rating-input" class="form-control">
+                    <option value="5">⭐⭐⭐⭐⭐ Phenomenal Motivation</option>
+                    <option value="4">⭐⭐⭐⭐ Very Good</option>
+                    <option value="3">⭐⭐⭐ Decent</option>
+                    <option value="2">⭐⭐ Needs Improvement</option>
+                    <option value="1">⭐ Not Relevant</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Your Feedback / Reflections</label>
+                <textarea id="quote-feedback-text" class="form-control" rows="3" placeholder="How did this quote help your mindset? Any favorite speaker you want more quotes from?"></textarea>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" class="hud-btn" onclick="closeQuoteFeedbackModal()">Cancel</button>
+                <button type="submit" class="hud-btn hud-btn-primary">Submit Feedback</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: Suggest Custom Quote -->
+<div class="modal-overlay" id="suggest-quote-modal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3><i class="fas fa-pen-nib"></i> ADD MOTIVATIONAL QUOTE</h3>
+            <button class="modal-close" onclick="closeSuggestQuoteModal()"><i class="fas fa-times"></i></button>
+        </div>
+        <form id="suggest-quote-form">
+            <div class="form-group">
+                <label>Quote Text *</label>
+                <textarea id="custom-quote-text" class="form-control" rows="3" placeholder="Enter an inspiring quote from Virat Kohli, Raj Shamani, or your favorite mentor..." required></textarea>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Author / Speaker</label>
+                    <input type="text" id="custom-quote-author" class="form-control" placeholder="e.g. Virat Kohli, Raj Shamani, Dr. APJ Abdul Kalam">
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="custom-quote-category" class="form-control">
+                        <option value="Virat Kohli">Virat Kohli</option>
+                        <option value="Raj Shamani">Raj Shamani</option>
+                        <option value="Tony Stark">Tony Stark</option>
+                        <option value="Spiritual & Wisdom">Spiritual & Wisdom</option>
+                        <option value="Life & Success">Life & Success</option>
+                    </select>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px;">
+                <button type="button" class="hud-btn" onclick="closeSuggestQuoteModal()">Cancel</button>
+                <button type="submit" class="hud-btn hud-btn-primary">Add to Vault</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentQuoteId = 1;
+
+async function loadDashboardHUD() {
+    try {
+        const res = await fetch('/api/stats');
+        if (!res.ok) return;
+        const data = await res.json();
+
+        document.getElementById('stat-study-streak').textContent = `${data.study_streak} Days 🔥`;
+        document.getElementById('stat-pending-tasks').textContent = data.pending_tasks;
+        document.getElementById('stat-completed-tasks').textContent = data.completed_tasks;
+        document.getElementById('stat-today-events').textContent = data.today_events_count;
+
+        // Quote
+        if (data.quote) {
+            displayQuote(data.quote);
+        }
+
+        // Today's Events
+        const eventsList = document.getElementById('today-events-list');
+        if (data.today_events && data.today_events.length > 0) {
+            eventsList.innerHTML = data.today_events.map(ev => `
+                <div style="background: rgba(5,9,20,0.6); border-left: 3px solid ${ev.color_code || '#00f2fe'}; border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
+                    <div>
+                        <h5 style="color: #fff; font-size: 0.95rem; margin-bottom: 2px;">${escapeHtml(ev.title)}</h5>
+                        <span style="font-size: 0.78rem; color: var(--arc-cyan);"><i class="fas fa-clock"></i> ${ev.start_time || 'TBD'} - ${ev.end_time || 'TBD'} ${ev.location ? '• ' + ev.location : ''}</span>
+                    </div>
+                    <span class="badge" style="background: rgba(0,242,254,0.1); border: 1px solid var(--arc-cyan); color: #fff;">${ev.event_type}</span>
+                </div>
+            `).join('');
+        } else {
+            eventsList.innerHTML = `
+                <div style="text-align: center; padding: 20px; color: var(--text-muted); font-size: 0.85rem;">
+                    <i class="fas fa-calendar-check" style="font-size: 1.8rem; color: var(--hulk-green); margin-bottom: 6px;"></i>
+                    <p>No classes or events scheduled today. Free study time!</p>
+                </div>
+            `;
+        }
+
+        // Priority Tasks
+        const tasksList = document.getElementById('today-urgent-tasks-list');
+        const urgentBanner = document.getElementById('urgent-deadline-alert');
+        if (data.urgent_tasks && data.urgent_tasks.length > 0) {
+            urgentBanner.style.display = 'flex';
+            tasksList.innerHTML = data.urgent_tasks.map(t => `
+                <div style="background: rgba(5,9,20,0.6); border: 1px solid rgba(255,42,77,0.3); border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
+                    <div>
+                        <h5 style="color: #fff; font-size: 0.95rem; margin-bottom: 2px;">${escapeHtml(t.title)}</h5>
+                        <span style="font-size: 0.78rem; color: var(--stark-red);"><i class="fas fa-clock"></i> Due: ${t.due_date || 'Today'} ${t.due_time || ''}</span>
+                    </div>
+                    <span class="badge badge-priority-high">${t.priority}</span>
+                </div>
+            `).join('');
+        } else {
+            urgentBanner.style.display = 'none';
+            tasksList.innerHTML = `
+                <div style="text-align: center; padding: 20px; color: var(--text-muted); font-size: 0.85rem;">
+                    <i class="fas fa-shield-alt" style="font-size: 1.8rem; color: var(--hulk-green); margin-bottom: 6px;"></i>
+                    <p>No urgent deadlines right now. All clear!</p>
+                </div>
+            `;
+        }
+    } catch (e) {
+        console.error("HUD error", e);
+    }
+}
+
+function displayQuote(q) {
+    currentQuoteId = q.id;
+    document.getElementById('quote-text-display').textContent = `"${q.quote}"`;
+    document.getElementById('quote-author-display').textContent = `— ${q.author}`;
+    document.getElementById('quote-category-tag').textContent = `${(q.category || 'WARRIOR').toUpperCase()} MOTIVATION`;
+}
+
+async function loadNewQuote() {
+    try {
+        const res = await fetch('/api/quotes/daily');
+        const q = await res.json();
+        displayQuote(q);
+        jarvisAudio.playClick();
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+async function rateQuote(rating, feedback) {
+    try {
+        await fetch('/api/quotes/feedback', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ quote_id: currentQuoteId, rating, feedback })
+        });
+        showToast('Feedback Logged', 'JARVIS is curating better motivation for you.', 'success');
+    } catch (e) {
+        showToast('Error', 'Could not save feedback', 'danger');
+    }
+}
+
+function openQuoteFeedbackModal() {
+    const m = document.getElementById('quote-feedback-modal');
+    if (m) m.classList.add('active');
+}
+function closeQuoteFeedbackModal() {
+    const m = document.getElementById('quote-feedback-modal');
+    if (m) m.classList.remove('active');
+}
+
+function openSuggestQuoteModal() {
+    const m = document.getElementById('suggest-quote-modal');
+    if (m) m.classList.add('active');
+}
+function closeSuggestQuoteModal() {
+    const m = document.getElementById('suggest-quote-modal');
+    if (m) m.classList.remove('active');
+}
+
+async function handleCustomQuote(e) {
+    e.preventDefault();
+    const quote = document.getElementById('custom-quote-text').value.trim();
+    const author = document.getElementById('custom-quote-author').value.trim() || 'Favorite Speaker';
+    const category = document.getElementById('custom-quote-category').value;
+
+    try {
+        const res = await fetch('/api/quotes/suggest', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ quote, author, category })
+        });
+        if (res.ok) {
+            closeSuggestQuoteModal();
+            document.getElementById('suggest-quote-form').reset();
+            showToast('Quote Added', 'Your quote has been stored in your motivation vault!', 'success');
+            loadNewQuote();
+        }
+    } catch (e) {
+        showToast('Error', 'Failed to save quote', 'danger');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadDashboardHUD();
+    const suggestForm = document.getElementById('suggest-quote-form');
+    if (suggestForm) suggestForm.addEventListener('submit', handleCustomQuote);
+    
+    const feedbackForm = document.getElementById('quote-feedback-form');
+    if (feedbackForm) feedbackForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const rating = parseInt(document.getElementById('quote-rating-input').value, 10);
+        const feedback = document.getElementById('quote-feedback-text').value.trim();
+        await rateQuote(rating, feedback);
+        closeQuoteFeedbackModal();
+    });
+});
+</script>
+{% endblock %}

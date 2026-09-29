@@ -1,0 +1,213 @@
+{% extends 'base.html' %}
+
+{% block title %}Daily Habits & Hanuman Chalisa // AVENGERS HQ{% endblock %}
+{% block page_title %}DAILY HABITS & STREAK MATRIX{% endblock %}
+{% block page_subtitle %}Track daily spiritual & focus disciplines (Hanuman Chalisa) with glowing activity heatmaps{% endblock %}
+
+{% block header_actions %}
+<button class="hud-btn hud-btn-primary" onclick="openHabitModal()">
+    <i class="fas fa-plus"></i> Track New Habit
+</button>
+{% endblock %}
+
+{% block content %}
+<!-- Habits List Container -->
+<div id="habits-list" style="display: flex; flex-direction: column; gap: 20px;"></div>
+
+<!-- Modal: New Habit Creation -->
+<div class="modal-overlay" id="habit-modal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3><i class="fas fa-fire"></i> INITIALIZE DAILY HABIT</h3>
+            <button class="modal-close" onclick="closeHabitModal()"><i class="fas fa-times"></i></button>
+        </div>
+
+        <form id="new-habit-form">
+            <div class="form-group">
+                <label for="habit-name-input">Habit Name *</label>
+                <input type="text" id="habit-name-input" class="form-control" placeholder="e.g. Read Hanuman Chalisa Daily" required>
+            </div>
+
+            <div class="form-group">
+                <label for="habit-desc-input">Purpose / Routine Description</label>
+                <textarea id="habit-desc-input" class="form-control" rows="2" placeholder="Daily morning recitation for courage, focus and positive energy..."></textarea>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="habit-reminder-input"><i class="fas fa-bell"></i> Daily Reminder Time</label>
+                    <input type="time" id="habit-reminder-input" class="form-control" value="07:30">
+                </div>
+                <div class="form-group">
+                    <label for="habit-category-input">Category</label>
+                    <select id="habit-category-input" class="form-control">
+                        <option value="Spiritual & Focus">Spiritual & Focus</option>
+                        <option value="Physical Fitness">Physical Fitness</option>
+                        <option value="Daily Reading">Daily Reading</option>
+                        <option value="Coding & Problem Solving">Coding & Problem Solving</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px;">
+                <button type="button" class="hud-btn" onclick="closeHabitModal()">Cancel</button>
+                <button type="submit" class="hud-btn hud-btn-primary">
+                    <i class="fas fa-check"></i> Register Habit
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let allHabits = [];
+
+async function fetchHabits() {
+    try {
+        const res = await fetch('/api/habits');
+        allHabits = await res.json();
+        renderHabits();
+    } catch (e) {
+        showToast('Error', 'Unable to fetch habit records', 'danger');
+    }
+}
+
+function generateLast60Days() {
+    const days = [];
+    const today = new Date();
+    for (let i = 59; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(today.getDate() - i);
+        days.push(d.toISOString().split('T')[0]);
+    }
+    return days;
+}
+
+function renderHabits() {
+    const container = document.getElementById('habits-list');
+    if (!container) return;
+
+    const days60 = generateLast60Days();
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    container.innerHTML = allHabits.map(h => {
+        const loggedSet = new Set(h.logged_dates || []);
+        const isDoneToday = loggedSet.has(todayStr);
+
+        return `
+            <div class="stark-card" style="border-left: 4px solid ${isDoneToday ? 'var(--arc-cyan)' : 'var(--stark-gold)'};">
+                <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 14px;">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+                            <h3 style="font-family: var(--font-heading); font-size: 1.2rem; color: #fff;">
+                                ${h.name.includes('Hanuman') ? '<i class="fas fa-om" style="color: var(--stark-gold);"></i> ' : '<i class="fas fa-fire" style="color: var(--stark-red);"></i> '}
+                                ${escapeHtml(h.name)}
+                            </h3>
+                            <span class="badge badge-warning" style="font-size: 0.85rem; font-weight: 700;">
+                                🔥 ${h.current_streak} DAY STREAK
+                            </span>
+                            <span class="badge" style="background: rgba(0,242,254,0.1); border: 1px solid var(--arc-cyan); color: var(--arc-cyan);">
+                                <i class="fas fa-clock"></i> Reminder: ${h.reminder_time || '07:30'}
+                            </span>
+                        </div>
+                        <p style="font-size: 0.88rem; color: var(--text-muted);">${escapeHtml(h.description || '')}</p>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        ${h.name.includes('Hanuman') ? `
+                            <button class="hud-btn" style="background: rgba(255,183,3,0.15); border-color: var(--stark-gold); color: var(--stark-gold);" onclick="openChalisaModal()">
+                                <i class="fas fa-book-open"></i> Read Chalisa
+                            </button>
+                        ` : ''}
+
+                        <button class="hud-btn ${isDoneToday ? 'hud-btn-primary' : ''}" style="padding: 9px 16px;" onclick="toggleHabitDay(${h.id}, '${todayStr}')">
+                            <i class="fas ${isDoneToday ? 'fa-check-circle' : 'fa-circle'}"></i> 
+                            ${isDoneToday ? 'Done Today ✔' : 'Mark Done Today'}
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 60-Day Activity Heatmap Grid -->
+                <div class="streak-grid-container">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted);">
+                        <span><i class="fas fa-calendar-alt"></i> 60-Day Discipline Matrix (Lights up when completed)</span>
+                        <span>${loggedSet.size} total days logged</span>
+                    </div>
+
+                    <div class="streak-days-grid">
+                        ${days60.map(d => {
+                            const isDone = loggedSet.has(d);
+                            const isToday = d === todayStr;
+                            return `
+                                <div class="streak-day-cell ${isDone ? 'active-done' : ''} ${isToday ? 'today-target' : ''}" 
+                                     title="Date: ${d} - ${isDone ? 'Completed (Glowing)' : 'Dull (Not completed)'}"
+                                     onclick="toggleHabitDay(${h.id}, '${d}')">
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+async function toggleHabitDay(habitId, dateStr) {
+    try {
+        const res = await fetch(`/api/habits/${habitId}/toggle-today`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ date: dateStr })
+        });
+        if (res.ok) {
+            jarvisAudio.playTaskComplete();
+            showToast('Streak Matrix Updated', 'Habit log status synchronized.', 'success');
+            fetchHabits();
+        }
+    } catch (e) {
+        showToast('Error', 'Failed to toggle habit', 'danger');
+    }
+}
+
+async function handleCreateHabit(e) {
+    e.preventDefault();
+    const name = document.getElementById('habit-name-input').value.trim();
+    const description = document.getElementById('habit-desc-input').value.trim();
+    const reminder_time = document.getElementById('habit-reminder-input').value;
+    const category = document.getElementById('habit-category-input').value;
+
+    try {
+        const res = await fetch('/api/habits', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, description, reminder_time, category })
+        });
+        if (res.ok) {
+            closeHabitModal();
+            document.getElementById('new-habit-form').reset();
+            showToast('Habit Initialized', 'Daily streak tracker online.', 'success');
+            fetchHabits();
+        }
+    } catch (e) {
+        showToast('Error', 'Could not save habit', 'danger');
+    }
+}
+
+function openHabitModal() {
+    const m = document.getElementById('habit-modal');
+    if (m) m.classList.add('active');
+}
+function closeHabitModal() {
+    const m = document.getElementById('habit-modal');
+    if (m) m.classList.remove('active');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    fetchHabits();
+    const form = document.getElementById('new-habit-form');
+    if (form) form.addEventListener('submit', handleCreateHabit);
+});
+</script>
+{% endblock %}

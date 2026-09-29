@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+
+{% block title %}Subject PDF Vault // AVENGERS HQ{% endblock %}
+{% block page_title %}SECTION & SUBJECT PDF VAULT{% endblock %}
+{% block page_subtitle %}Secure cloud storage & instant in-browser viewer for study materials, notes, and records{% endblock %}
+
+{% block extra_css %}
+<style>
+    .pdf-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+    }
+
+    .dropzone-box {
+        border: 2px dashed var(--arc-cyan);
+        border-radius: 14px;
+        padding: 30px;
+        text-align: center;
+        background: rgba(0, 242, 254, 0.03);
+        cursor: pointer;
+        transition: var(--transition-smooth);
+    }
+
+    .dropzone-box:hover {
+        background: rgba(0, 242, 254, 0.08);
+        box-shadow: 0 0 15px rgba(0, 242, 254, 0.2);
+    }
+</style>
+{% endblock %}
+
+{% block header_actions %}
+<button class="hud-btn hud-btn-primary" onclick="openUploadModal()">
+    <i class="fas fa-file-upload"></i> Upload PDF
+</button>
+{% endblock %}
+
+{% block content %}
+<!-- Search & Filter Controls -->
+<div class="stark-card" style="padding: 16px 20px; margin-bottom: 24px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+        <div style="position: relative; flex: 1; min-width: 250px;">
+            <i class="fas fa-search" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+            <input type="text" id="vault-search" class="form-control" style="padding-left: 40px;" placeholder="Search PDFs by title, subject, or section tag...">
+        </div>
+    </div>
+</div>
+
+<!-- Subject Filter Pills -->
+<div class="category-pills-bar" id="vault-subject-pills" style="margin-bottom: 20px;"></div>
+
+<!-- PDF Cards Grid -->
+<div class="pdf-grid" id="pdf-grid"></div>
+
+<!-- Empty State -->
+<div id="pdf-empty" class="stark-card" style="text-align: center; padding: 40px 20px; display: none;">
+    <div style="font-size: 3rem; color: var(--stark-red); margin-bottom: 12px; opacity: 0.8;">
+        <i class="fas fa-folder-open"></i>
+    </div>
+    <h3 style="font-family: var(--font-heading); color: #fff; margin-bottom: 8px;">Vault Partition Empty</h3>
+    <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 20px;">No PDFs cataloged under this section or subject filter.</p>
+    <button class="hud-btn hud-btn-primary" onclick="openUploadModal()">
+        <i class="fas fa-cloud-upload-alt"></i> Upload PDF Now
+    </button>
+</div>
+
+<!-- Modal: Upload PDF -->
+<div class="modal-overlay" id="upload-modal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3><i class="fas fa-cloud-upload-alt"></i> ENCRYPT & UPLOAD PDF</h3>
+            <button class="modal-close" onclick="closeUploadModal()"><i class="fas fa-times"></i></button>
+        </div>
+
+        <form id="upload-pdf-form">
+            <div class="form-group">
+                <label for="pdf-file-input">Select PDF File *</label>
+                <div class="dropzone-box" onclick="document.getElementById('pdf-file-input').click()">
+                    <i class="fas fa-file-pdf" style="font-size: 2.5rem; color: var(--stark-red); margin-bottom: 8px;"></i>
+                    <p id="file-chosen-text" style="color: #fff; font-weight: 600;">Click or Drop PDF here to upload</p>
+                    <span style="font-size: 0.8rem; color: var(--text-muted);">Max file size: 50MB</span>
+                </div>
+                <input type="file" id="pdf-file-input" accept=".pdf" style="display: none;" onchange="document.getElementById('file-chosen-text').textContent = this.files[0] ? this.files[0].name : 'Click or Drop PDF here';">
+            </div>
+
+            <div class="form-group">
+                <label for="pdf-title-input">Document Title</label>
+                <input type="text" id="pdf-title-input" class="form-control" placeholder="e.g. Quantum Computing Notes - Chapter 1">
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="pdf-subject-input">Subject / Course</label>
+                    <input type="text" id="pdf-subject-input" class="form-control" placeholder="e.g. Physics, AI, Mathematics" list="subject-suggestions">
+                    <datalist id="subject-suggestions">
+                        <option value="Physics">
+                        <option value="Mathematics">
+                        <option value="Computer Science">
+                        <option value="Chemistry">
+                        <option value="Cyber Security">
+                    </datalist>
+                </div>
+
+                <div class="form-group">
+                    <label for="pdf-section-input">Section / Module Tag</label>
+                    <input type="text" id="pdf-section-input" class="form-control" placeholder="e.g. Unit 1, Assignment, Lab Manual">
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+                <button type="button" class="hud-btn" onclick="closeUploadModal()">Cancel</button>
+                <button type="submit" id="pdf-upload-btn" class="hud-btn hud-btn-primary">
+                    <i class="fas fa-upload"></i> Upload to Vault
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: In-Browser PDF Previewer -->
+<div class="modal-overlay" id="pdf-viewer-modal">
+    <div class="modal-card" style="max-width: 90vw; width: 950px; height: 88vh; display: flex; flex-direction: column;">
+        <div class="modal-header">
+            <h3 id="pdf-view-title"><i class="fas fa-file-pdf"></i> PDF PREVIEW</h3>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <a id="pdf-view-download" href="#" class="hud-btn" style="padding: 6px 12px; font-size: 0.85rem;" download>
+                    <i class="fas fa-download"></i> Download
+                </a>
+                <button class="modal-close" onclick="closePdfViewer()"><i class="fas fa-times"></i></button>
+            </div>
+        </div>
+        <div style="flex: 1; width: 100%; height: 100%; border-radius: 10px; overflow: hidden; background: #050811;">
+            <iframe id="pdf-frame" src="" style="width: 100%; height: 100%; border: none;"></iframe>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/pdf_vault.js') }}"></script>
+{% endblock %}

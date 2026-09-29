@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}Arc Focus Timer // AVENGERS HQ{% endblock %}
+{% block page_title %}ARC REACTOR FOCUS PROTOCOL{% endblock %}
+{% block page_subtitle %}Deep work & tactical study cycles powered by the Stark Arc Reactor{% endblock %}
+
+{% block content %}
+<div style="max-width: 700px; margin: 0 auto; text-align: center;">
+    <!-- Mode Select Buttons -->
+    <div style="display: inline-flex; background: rgba(13, 20, 36, 0.8); border: 1px solid rgba(0, 242, 254, 0.2); border-radius: 30px; padding: 4px; margin-bottom: 25px;">
+        <button id="mode-work-btn" class="hud-btn hud-btn-primary" style="border-radius: 20px; border: none;">
+            <i class="fas fa-fire"></i> 25 Min Focus
+        </button>
+        <button id="mode-break-btn" class="hud-btn" style="border-radius: 20px; border: none;">
+            <i class="fas fa-coffee"></i> 5 Min Cooldown
+        </button>
+    </div>
+
+    <!-- Arc Reactor Visual Widget -->
+    <div class="stark-card" style="padding: 40px; margin-bottom: 30px; position: relative;">
+        <h4 id="timer-mode-label" style="font-family: var(--font-heading); letter-spacing: 2px; color: var(--arc-cyan); margin-bottom: 20px;">
+            ARC CORE: MAXIMUM POWER (FOCUS)
+        </h4>
+
+        <div class="arc-reactor-widget">
+            <div class="arc-outer-ring"></div>
+            <div class="arc-inner-ring"></div>
+            <div class="arc-core">
+                <span id="timer-display" class="arc-timer-display">25:00</span>
+                <span style="font-size: 0.65rem; color: #030a1a; font-weight: 700; letter-spacing: 1px; margin-top: 2px;">OUTPUT: 100%</span>
+            </div>
+        </div>
+
+        <!-- Timer Action Controls -->
+        <div style="display: flex; justify-content: center; gap: 16px; margin-top: 30px;">
+            <button id="timer-start-btn" class="hud-btn hud-btn-primary" style="padding: 12px 30px; font-size: 1.1rem;">
+                <i class="fas fa-play"></i> ENGAGE
+            </button>
+            <button id="timer-pause-btn" class="hud-btn hud-btn-danger" style="padding: 12px 30px; font-size: 1.1rem; display: none;">
+                <i class="fas fa-pause"></i> PAUSE
+            </button>
+            <button id="timer-reset-btn" class="hud-btn" style="padding: 12px 24px;">
+                <i class="fas fa-redo"></i> RECHARGE
+            </button>
+        </div>
+    </div>
+
+    <!-- Focus Protocol Tips -->
+    <div class="stark-card" style="text-align: left; border-left: 4px solid var(--cap-blue);">
+        <h4 style="font-family: var(--font-heading); font-size: 0.95rem; color: #fff; margin-bottom: 8px;">
+            <i class="fas fa-shield-alt" style="color: var(--cap-blue);"></i> TACTICAL FOCUS RULES
+        </h4>
+        <ul style="color: var(--text-muted); font-size: 0.88rem; padding-left: 20px; line-height: 1.8;">
+            <li>Select one critical mission task from your Google Tasks HQ.</li>
+            <li>Silence all non-essential communications for the 25-minute cycle.</li>
+            <li>Take full advantage of the 5-minute cooldown to rest your eyes and recharge.</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/focus_timer.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+
+{% block title %}Subject Notes // AVENGERS HQ{% endblock %}
+{% block page_title %}SUBJECT NOTES ARCHIVE{% endblock %}
+{% block page_subtitle %}Rich lecture notes organized by subject, tags, and instant search{% endblock %}
+
+{% block header_actions %}
+<button class="hud-btn hud-btn-primary" onclick="openNoteModal()">
+    <i class="fas fa-plus"></i> New Note
+</button>
+{% endblock %}
+
+{% block content %}
+<div class="stark-card" style="padding: 14px 20px; margin-bottom: 24px;">
+    <div style="position: relative;">
+        <i class="fas fa-search" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+        <input type="text" id="note-search" class="form-control" style="padding-left: 38px;" placeholder="Search subject notes and tags..." oninput="filterNotes(this.value)">
+    </div>
+</div>
+
+<div id="notes-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px;"></div>
+
+<!-- Modal: New Note -->
+<div class="modal-overlay" id="note-modal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3><i class="fas fa-sticky-note"></i> CREATE SUBJECT NOTE</h3>
+            <button class="modal-close" onclick="closeNoteModal()"><i class="fas fa-times"></i></button>
+        </div>
+
+        <form id="new-note-form">
+            <div class="form-group">
+                <label for="note-title-input">Title *</label>
+                <input type="text" id="note-title-input" class="form-control" placeholder="e.g. Quantum Wave Function Summary" required>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="note-subject-input">Subject / Topic</label>
+                    <input type="text" id="note-subject-input" class="form-control" placeholder="e.g. Physics, AI, Wisdom">
+                </div>
+                <div class="form-group">
+                    <label for="note-tags-input">Tags (comma separated)</label>
+                    <input type="text" id="note-tags-input" class="form-control" placeholder="e.g. formula, mid-term, exam">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="note-content-input">Note Content *</label>
+                <textarea id="note-content-input" class="form-control" rows="6" placeholder="Write key formulas, lecture takeaways, summary points..." required></textarea>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px;">
+                <button type="button" class="hud-btn" onclick="closeNoteModal()">Cancel</button>
+                <button type="submit" class="hud-btn hud-btn-primary">
+                    <i class="fas fa-save"></i> Save Note
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let allNotes = [];
+
+async function fetchNotes() {
+    try {
+        const res = await fetch('/api/notes');
+        allNotes = await res.json();
+        renderNotes(allNotes);
+    } catch (e) {
+        showToast('Error', 'Unable to fetch notes', 'danger');
+    }
+}
+
+function renderNotes(notes) {
+    const grid = document.getElementById('notes-grid');
+    if (!grid) return;
+
+    if (notes.length === 0) {
+        grid.innerHTML = `<div class="stark-card" style="grid-column: 1/-1; text-align: center; padding: 40px;"><p style="color: var(--text-muted);">No notes found. Create your first subject note!</p></div>`;
+        return;
+    }
+
+    grid.innerHTML = notes.map(n => `
+        <div class="stark-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                    <span class="badge" style="background: rgba(0,242,254,0.15); border: 1px solid var(--arc-cyan); color: var(--arc-cyan);">
+                        ${escapeHtml(n.subject || 'General')}
+                    </span>
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">${n.updated_at ? n.updated_at.split(' ')[0] : 'Today'}</span>
+                </div>
+
+                <h4 style="font-size: 1.1rem; font-weight: 600; color: #fff; margin-bottom: 8px;">${escapeHtml(n.title)}</h4>
+                <p style="font-size: 0.88rem; color: #cbd5e1; white-space: pre-line; line-height: 1.5; margin-bottom: 12px;">${escapeHtml(n.content)}</p>
+            </div>
+
+            <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid rgba(0,242,254,0.1); padding-top: 10px;">
+                <div style="font-size: 0.75rem; color: var(--stark-gold);">
+                    ${n.tags ? n.tags.split(',').map(t => `#${t.trim()}`).join(' ') : ''}
+                </div>
+                <button class="hud-btn hud-btn-danger" style="padding: 4px 8px; font-size: 0.8rem;" onclick="deleteNote(${n.id})">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function filterNotes(q) {
+    const query = q.toLowerCase();
+    const filtered = allNotes.filter(n => 
+        n.title.toLowerCase().includes(query) || 
+        n.content.toLowerCase().includes(query) || 
+        (n.tags && n.tags.toLowerCase().includes(query)) ||
+        (n.subject && n.subject.toLowerCase().includes(query))
+    );
+    renderNotes(filtered);
+}
+
+async function handleAddNote(e) {
+    e.preventDefault();
+    const title = document.getElementById('note-title-input').value.trim();
+    const subject = document.getElementById('note-subject-input').value.trim() || 'General';
+    const tags = document.getElementById('note-tags-input').value.trim();
+    const content = document.getElementById('note-content-input').value.trim();
+
+    try {
+        const res = await fetch('/api/notes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title, subject, tags, content })
+        });
+        if (res.ok) {
+            closeNoteModal();
+            document.getElementById('new-note-form').reset();
+            showToast('Note Saved', 'Subject note archived.', 'success');
+            fetchNotes();
+        }
+    } catch (e) {
+        showToast('Error', 'Failed to save note', 'danger');
+    }
+}
+
+async function deleteNote(id) {
+    if (!confirm('Delete this note?')) return;
+    try {
+        const res = await fetch(`/api/notes/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+            showToast('Note Deleted', 'Note removed from archive.', 'warning');
+            fetchNotes();
+        }
+    } catch (e) {
+        showToast('Error', 'Could not delete note', 'danger');
+    }
+}
+
+function openNoteModal() {
+    const m = document.getElementById('note-modal');
+    if (m) m.classList.add('active');
+}
+function closeNoteModal() {
+    const m = document.getElementById('note-modal');
+    if (m) m.classList.remove('active');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    fetchNotes();
+    const form = document.getElementById('new-note-form');
+    if (form) form.addEventListener('submit', handleAddNote);
+});
+</script>
+{% endblock %}

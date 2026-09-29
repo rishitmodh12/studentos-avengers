@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+
+{% block title %}Academic & Life Goals // AVENGERS HQ{% endblock %}
+{% block page_title %}MISSION GOALS & TARGETS{% endblock %}
+{% block page_subtitle %}Track short-term and long-term academic, career, and personal milestones{% endblock %}
+
+{% block header_actions %}
+<button class="hud-btn hud-btn-primary" onclick="openGoalModal()">
+    <i class="fas fa-plus"></i> Set New Goal
+</button>
+{% endblock %}
+
+{% block content %}
+<div id="goals-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 18px;"></div>
+
+<!-- Modal: New Goal -->
+<div class="modal-overlay" id="goal-modal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3><i class="fas fa-bullseye"></i> SET STRATEGIC GOAL</h3>
+            <button class="modal-close" onclick="closeGoalModal()"><i class="fas fa-times"></i></button>
+        </div>
+
+        <form id="new-goal-form">
+            <div class="form-group">
+                <label for="goal-title-input">Goal Statement *</label>
+                <input type="text" id="goal-title-input" class="form-control" placeholder="e.g. Maintain 90%+ CGPA in Semester 3" required>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="goal-category-input">Category</label>
+                    <select id="goal-category-input" class="form-control">
+                        <option value="Academic">Academic</option>
+                        <option value="Career & Skills">Career & Skills</option>
+                        <option value="Personal & Spiritual">Personal & Spiritual</option>
+                        <option value="Fitness">Fitness</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="goal-date-input">Target Deadline Date</label>
+                    <input type="date" id="goal-date-input" class="form-control">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="goal-progress-input">Current Progress (%)</label>
+                <input type="range" id="goal-progress-input" class="form-control" min="0" max="100" value="25" oninput="document.getElementById('goal-val-display').textContent = this.value + '%'">
+                <span id="goal-val-display" style="color: var(--arc-cyan); font-weight: 700;">25%</span>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px;">
+                <button type="button" class="hud-btn" onclick="closeGoalModal()">Cancel</button>
+                <button type="submit" class="hud-btn hud-btn-primary">
+                    <i class="fas fa-check"></i> Lock In Goal
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let allGoals = [];
+
+async function fetchGoals() {
+    try {
+        const res = await fetch('/api/goals');
+        allGoals = await res.json();
+        renderGoals();
+    } catch (e) {
+        showToast('Error', 'Unable to fetch goals', 'danger');
+    }
+}
+
+function renderGoals() {
+    const grid = document.getElementById('goals-grid');
+    if (!grid) return;
+
+    if (allGoals.length === 0) {
+        grid.innerHTML = `<div class="stark-card" style="grid-column: 1/-1; text-align: center; padding: 40px;"><p style="color: var(--text-muted);">No active goals. Set your first academic milestone!</p></div>`;
+        return;
+    }
+
+    grid.innerHTML = allGoals.map(g => `
+        <div class="stark-card">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                <span class="badge badge-warning">${g.category}</span>
+                <span style="font-size: 0.8rem; color: var(--text-muted);"><i class="fas fa-calendar-alt"></i> ${g.target_date || 'Ongoing'}</span>
+            </div>
+
+            <h4 style="font-size: 1.1rem; font-weight: 600; color: #fff; margin-bottom: 14px;">${escapeHtml(g.title)}</h4>
+
+            <div style="margin-bottom: 12px;">
+                <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--arc-cyan); margin-bottom: 6px;">
+                    <span>Progress</span>
+                    <span style="font-weight: 700;">${g.progress}%</span>
+                </div>
+                <div style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
+                    <div style="height: 100%; width: ${g.progress}%; background: linear-gradient(90deg, var(--arc-cyan), var(--hulk-green));"></div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 6px; align-items: center; margin-top: 14px;">
+                <button class="hud-btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="updateProgress(${g.id}, ${Math.max(0, g.progress - 10)})">-10%</button>
+                <button class="hud-btn hud-btn-primary" style="padding: 4px 8px; font-size: 0.75rem;" onclick="updateProgress(${g.id}, ${Math.min(100, g.progress + 10)})">+10%</button>
+                <button class="hud-btn" style="padding: 4px 8px; font-size: 0.75rem; margin-left: auto;" onclick="updateProgress(${g.id}, 100)">Complete ✔</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+async function updateProgress(goalId, newProgress) {
+    try {
+        const res = await fetch(`/api/goals/${goalId}/progress`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ progress: newProgress })
+        });
+        if (res.ok) {
+            jarvisAudio.playClick();
+            fetchGoals();
+        }
+    } catch (e) {
+        showToast('Error', 'Failed to update goal', 'danger');
+    }
+}
+
+async function handleAddGoal(e) {
+    e.preventDefault();
+    const title = document.getElementById('goal-title-input').value.trim();
+    const category = document.getElementById('goal-category-input').value;
+    const target_date = document.getElementById('goal-date-input').value;
+    const progress = parseInt(document.getElementById('goal-progress-input').value, 10);
+
+    try {
+        const res = await fetch('/api/goals', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title, category, target_date, progress })
+        });
+        if (res.ok) {
+            closeGoalModal();
+            document.getElementById('new-goal-form').reset();
+            showToast('Goal Initialized', 'Milestone locked into tracking.', 'success');
+            fetchGoals();
+        }
+    } catch (e) {
+        showToast('Error', 'Failed to save goal', 'danger');
+    }
+}
+
+function openGoalModal() {
+    const m = document.getElementById('goal-modal');
+    if (m) m.classList.add('active');
+}
+function closeGoalModal() {
+    const m = document.getElementById('goal-modal');
+    if (m) m.classList.remove('active');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    fetchGoals();
+    const form = document.getElementById('new-goal-form');
+    if (form) form.addEventListener('submit', handleAddGoal);
+});
+</script>
+{% endblock %}
