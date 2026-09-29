@@ -216,6 +216,20 @@ async function markChalisaDoneToday() {
     }
 }
 
+// Google Tasks Modal Controls
+function openGoogleTasksModal() {
+    const m = document.getElementById('google-tasks-modal');
+    if (m) {
+        m.classList.add('active');
+        jarvisAudio.playClick();
+    }
+}
+
+function closeGoogleTasksModal() {
+    const m = document.getElementById('google-tasks-modal');
+    if (m) m.classList.remove('active');
+}
+
 // ================= GOOGLE ACCOUNT & TASKS OAUTH2 ENGINE =================
 
 let googleTokenClient = null;
@@ -435,4 +449,11 @@ document.addEventListener('DOMContentLoaded', () => {
     checkDailyHabitReminders();
     setInterval(checkDeadlinesAndAlert, 60000);
     setInterval(checkDailyHabitReminders, 60000);
+
+    // Click outside modal to close
+    document.addEventListener('click', (e) => {
+        if (e.target.classList && e.target.classList.contains('modal-overlay')) {
+            e.target.classList.remove('active');
+        }
+    });
 });
