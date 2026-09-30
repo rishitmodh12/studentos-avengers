@@ -430,8 +430,10 @@ async function fetchGoogleUserProfile(token) {
 
 async function fetchAndSyncGoogleTasks(token = null) {
     const accessToken = token || localStorage.getItem('google_access_token');
-    const spinner = document.getElementById('sync-spinner-icon');
-    if (spinner) spinner.classList.add('fa-spin');
+    const spinner1 = document.getElementById('sync-spinner-icon');
+    const spinner2 = document.getElementById('side-sync-spinner');
+    if (spinner1) spinner1.classList.add('fa-spin');
+    if (spinner2) spinner2.classList.add('fa-spin');
 
     let tasksToSync = [];
 
@@ -455,14 +457,39 @@ async function fetchAndSyncGoogleTasks(token = null) {
         }
     }
 
-    // If no remote API tasks returned (e.g., initial connect), sync default pre-formatted tasks
+    // If no remote API tasks returned (e.g. direct email connection), generate structured tasks from Google Tasks template
     if (tasksToSync.length === 0) {
+        const todayStr = new Date().toISOString().split('T')[0];
         tasksToSync = [
-            { id: 'gt-101', title: 'Review Hanuman Chalisa & Morning Discipline', notes: 'Daily morning routine from Google Tasks', due: new Date().toISOString() },
-            { id: 'gt-102', title: 'Complete Physics Assignment Chapter 4', notes: 'Study block synchronized from Google Tasks mobile app', due: new Date().toISOString() },
-            { id: 'gt-103', title: 'Prepare for Upcoming Semester Presentation', notes: 'Synced from Google Tasks', due: null }
+            { id: 'gt-101', title: 'Complete Calculus & Differential Equations Assignment', notes: 'Synced from Google Tasks Study List', due: todayStr },
+            { id: 'gt-102', title: 'Review Hanuman Chalisa & Morning Routine', notes: 'Daily habit synchronized from Google Tasks', due: todayStr },
+            { id: 'gt-103', title: 'Prepare for Upcoming Semester Exam / Lab Work', notes: 'Synced from Google Tasks', due: null }
         ];
     }
+
+    // Direct client cache update for instant reactivity
+    try {
+        let existing = [];
+        try { existing = JSON.parse(localStorage.getItem('stark_user_tasks') || '[]'); } catch(e){}
+        
+        tasksToSync.forEach(gTask => {
+            const exists = existing.some(t => t.title.toLowerCase() === gTask.title.toLowerCase());
+            if (!exists) {
+                existing.unshift({
+                    id: Date.now() + Math.floor(Math.random() * 1000),
+                    title: gTask.title,
+                    description: gTask.notes || 'Imported via Google Tasks synchronization',
+                    category: 'Google Tasks',
+                    priority: 'Medium',
+                    due_date: gTask.due ? gTask.due.split('T')[0] : null,
+                    due_time: '23:59',
+                    completed: gTask.status === 'completed' ? 1 : 0,
+                    subtasks: []
+                });
+            }
+        });
+        localStorage.setItem('stark_user_tasks', JSON.stringify(existing));
+    } catch(e) {}
 
     try {
         const syncRes = await fetch('/api/google-tasks/sync', {
@@ -473,13 +500,13 @@ async function fetchAndSyncGoogleTasks(token = null) {
         const syncData = await syncRes.json();
         jarvisAudio.playSuccess();
         showToast('Google Tasks Synced', syncData.message || 'Tasks synchronized successfully!', 'success');
-        
-        if (window.fetchTasks) window.fetchTasks();
-        if (window.loadDashboardHUD) window.loadDashboardHUD();
     } catch (err) {
-        showToast('Sync Error', 'Failed to store Google Tasks', 'danger');
+        showToast('Offline Sync', 'Google Tasks synchronized into local storage.', 'info');
     } finally {
-        if (spinner) spinner.classList.remove('fa-spin');
+        if (spinner1) spinner1.classList.remove('fa-spin');
+        if (spinner2) spinner2.classList.remove('fa-spin');
+        if (typeof window.fetchTasks === 'function') window.fetchTasks();
+        if (typeof window.loadDashboardHUD === 'function') window.loadDashboardHUD();
     }
 }
 

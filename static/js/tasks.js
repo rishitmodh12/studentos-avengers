@@ -89,6 +89,7 @@ function getDeadlineBadge(dueDate, dueTime) {
 function renderTasks() {
     const listContainer = document.getElementById('tasks-container');
     const emptyState = document.getElementById('tasks-empty');
+    updateTaskMetrics();
     if (!listContainer) return;
 
     let filtered = allTasks.filter(task => {
@@ -347,6 +348,185 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
+// Update Side HUD Task Metrics
+function updateTaskMetrics() {
+    const totalEl = document.getElementById('metric-total-tasks');
+    const pendingEl = document.getElementById('metric-pending-tasks');
+    const urgentEl = document.getElementById('metric-urgent-tasks');
+    const pctEl = document.getElementById('metric-completion-pct');
+    const barEl = document.getElementById('metric-progress-bar');
+    const googlePill = document.getElementById('side-google-status-pill');
+
+    const total = allTasks.length;
+    const completed = allTasks.filter(t => t.completed).length;
+    const pending = total - completed;
+
+    const urgent = allTasks.filter(t => {
+        if (t.completed || !t.due_date) return false;
+        const diffHours = (new Date(`${t.due_date}T${t.due_time || '23:59'}:00`) - new Date()) / (1000 * 60 * 60);
+        return diffHours >= 0 && diffHours <= 24;
+    }).length;
+
+    const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+    if (totalEl) totalEl.textContent = total;
+    if (pendingEl) pendingEl.textContent = pending;
+    if (urgentEl) urgentEl.textContent = urgent;
+    if (pctEl) pctEl.textContent = `${pct}%`;
+    if (barEl) barEl.style.width = `${pct}%`;
+
+    if (googlePill) {
+        const user = localStorage.getItem('google_user_profile');
+        if (user) {
+            googlePill.textContent = 'Synced';
+            googlePill.style.background = 'rgba(0, 230, 118, 0.2)';
+            googlePill.style.borderColor = 'var(--hulk-green)';
+            googlePill.style.color = '#86efac';
+        } else {
+            googlePill.textContent = 'Not Connected';
+            googlePill.style.background = 'rgba(255, 183, 3, 0.15)';
+            googlePill.style.borderColor = 'var(--stark-gold)';
+            googlePill.style.color = '#fde047';
+        }
+    }
+}
+
+// Quick 1-Click Task Add
+async function handleQuickAddTask(e) {
+    e.preventDefault();
+    const input = document.getElementById('quick-task-input');
+    const prioritySelect = document.getElementById('quick-task-priority');
+    const title = input ? input.value.trim() : '';
+    const priority = prioritySelect ? prioritySelect.value : 'Medium';
+
+    if (!title) return;
+
+    try {
+        const res = await fetch('/api/tasks', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                title: title,
+                description: 'Fast directive launched from sidebar HUD',
+                category: activeCategory !== 'All' ? activeCategory : 'Studies',
+                priority: priority,
+                due_date: new Date().toISOString().split('T')[0],
+                due_time: '23:59',
+                subtasks: []
+            })
+        });
+
+        if (res.ok) {
+            const created = await res.json();
+            allTasks.unshift(created);
+            saveTasksToLocalStorage(allTasks);
+            renderCategories();
+            renderTasks();
+            input.value = '';
+            jarvisAudio.playSuccess();
+            showToast('Quick Directive Added', `"${title}" added to active missions.`, 'success');
+        }
+    } catch (err) {
+        showToast('Error', 'Failed to add quick task', 'danger');
+    }
+}
+
+// Quick Import Google Tasks Modal Controls
+function openGoogleTasksImportModal() {
+    const m = document.getElementById('google-import-modal');
+    if (m) {
+        m.classList.add('active');
+        jarvisAudio.playClick();
+    }
+}
+
+function closeGoogleTasksImportModal() {
+    const m = document.getElementById('google-import-modal');
+    if (m) m.classList.remove('active');
+}
+
+async function submitImportedTasks() {
+    const textEl = document.getElementById('import-tasks-text');
+    const catEl = document.getElementById('import-category-input');
+    const prioEl = document.getElementById('import-priority-input');
+
+    const text = textEl ? textEl.value.trim() : '';
+    const category = catEl ? catEl.value.trim() || 'Google Tasks' : 'Google Tasks';
+    const priority = prioEl ? prioEl.value : 'Medium';
+
+    if (!text) {
+        showToast('Validation Error', 'Please paste or write task lines to import.', 'warning');
+        return;
+    }
+
+    const lines = text.split('\n').map(l => l.replace(/^[-*•\d.)\s]+/, '').trim()).filter(Boolean);
+    if (lines.length === 0) return;
+
+    let importedCount = 0;
+    for (const line of lines) {
+        try {
+            const res = await fetch('/api/tasks', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    title: line,
+                    description: 'Imported via Google Tasks / Text Bridge',
+                    category: category,
+                    priority: priority,
+                    due_date: new Date().toISOString().split('T')[0],
+                    subtasks: []
+                })
+            });
+            if (res.ok) {
+                const newTask = await res.json();
+                allTasks.unshift(newTask);
+                importedCount++;
+            }
+        } catch(e) {}
+    }
+
+    saveTasksToLocalStorage(allTasks);
+    renderCategories();
+    renderTasks();
+    closeGoogleTasksImportModal();
+    if (textEl) textEl.value = '';
+    jarvisAudio.playSuccess();
+    showToast('Import Complete', `${importedCount} tasks successfully imported and synced!`, 'success');
+}
+
+// Export Tasks in Google Tasks format (JSON download / clipboard copy)
+function exportTasksToGoogle() {
+    const exportData = allTasks.map(t => ({
+        id: `gt-${t.id}`,
+        title: t.title,
+        notes: t.description || '',
+        status: t.completed ? 'completed' : 'needsAction',
+        due: t.due_date ? `${t.due_date}T${t.due_time || '23:59'}:00.000Z` : null,
+        subtasks: (t.subtasks || []).map(st => ({
+            title: st.title,
+            status: st.completed ? 'completed' : 'needsAction'
+        }))
+    }));
+
+    const jsonStr = JSON.stringify(exportData, null, 2);
+    navigator.clipboard.writeText(jsonStr).then(() => {
+        jarvisAudio.playSuccess();
+        showToast('Export Copied', 'Google Tasks formatted JSON copied to clipboard!', 'success');
+    }).catch(() => {
+        // Fallback file download
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Google_Tasks_Export_${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        showToast('Export Downloaded', 'Google Tasks file downloaded.', 'info');
+    });
+}
+
+// Global hook
+window.fetchTasks = fetchTasks;
 
 // Initial binding
 document.addEventListener('DOMContentLoaded', () => {

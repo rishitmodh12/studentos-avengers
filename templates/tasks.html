@@ -60,16 +60,16 @@
 
 {% block content %}
 <!-- Search & Filter Control Bar -->
-<div class="stark-card" style="padding: 16px 20px; margin-bottom: 24px;">
-    <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+<div class="stark-card" style="padding: 14px 20px; margin-bottom: 20px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;">
         <!-- Search -->
-        <div style="position: relative; flex: 1; min-width: 250px;">
+        <div style="position: relative; flex: 1; min-width: 240px;">
             <i class="fas fa-search" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
             <input type="text" id="task-search" class="form-control" style="padding-left: 40px;" placeholder="Search missions, descriptions, or subtasks...">
         </div>
 
         <!-- Filter Buttons -->
-        <div style="display: flex; gap: 8px;">
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
             <button class="hud-btn active" data-task-filter="all">All Tasks</button>
             <button class="hud-btn" data-task-filter="urgent">
                 <i class="fas fa-fire" style="color: var(--stark-red);"></i> Urgent / Near
@@ -83,19 +83,142 @@
 <!-- Dynamic Category Filter Pills -->
 <div class="category-pills-bar" id="category-pills"></div>
 
-<!-- Task List Container -->
-<div id="tasks-container"></div>
+<!-- Side-By-Side Main Layout Grid -->
+<div style="display: grid; grid-template-columns: 2.2fr 1fr; gap: 20px; align-items: start;" id="tasks-side-by-side-grid">
+    
+    <!-- Left Column: Mission Directives / Tasks Stream -->
+    <div>
+        <!-- Task List Container -->
+        <div id="tasks-container"></div>
 
-<!-- Empty State -->
-<div id="tasks-empty" class="stark-card" style="text-align: center; padding: 40px 20px; display: none;">
-    <div style="font-size: 3rem; color: var(--arc-cyan); margin-bottom: 12px; opacity: 0.8;">
-        <i class="fas fa-clipboard-check"></i>
+        <!-- Empty State -->
+        <div id="tasks-empty" class="stark-card" style="text-align: center; padding: 40px 20px; display: none;">
+            <div style="font-size: 3rem; color: var(--arc-cyan); margin-bottom: 12px; opacity: 0.8;">
+                <i class="fas fa-clipboard-check"></i>
+            </div>
+            <h3 style="font-family: var(--font-heading); color: #fff; margin-bottom: 8px;">No Mission Tasks Found</h3>
+            <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 20px;">Your task slate is clean, or matching filters returned zero results.</p>
+            <button class="hud-btn hud-btn-primary" onclick="openTaskModal()">
+                <i class="fas fa-plus"></i> Create Mission Directive
+            </button>
+        </div>
     </div>
-    <h3 style="font-family: var(--font-heading); color: #fff; margin-bottom: 8px;">No Mission Tasks Found</h3>
-    <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 20px;">Your task slate is clean, or matching filters returned zero results.</p>
-    <button class="hud-btn hud-btn-primary" onclick="openTaskModal()">
-        <i class="fas fa-plus"></i> Create Mission Directive
-    </button>
+
+    <!-- Right Column: Google Tasks Sync Matrix & HUD Stats -->
+    <div style="display: flex; flex-direction: column; gap: 18px;">
+        
+        <!-- Google Tasks Cloud Sync Card -->
+        <div class="stark-card" style="border-top: 3px solid #4285F4; background: linear-gradient(135deg, rgba(66,133,244,0.08), rgba(13,20,36,0.85));">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+                <h4 style="font-family: var(--font-heading); font-size: 0.95rem; color: #fff; display: flex; align-items: center; gap: 8px;">
+                    <i class="fab fa-google" style="color: #4285F4; font-size: 1.1rem;"></i> GOOGLE TASKS SYNC
+                </h4>
+                <span class="badge" style="background: rgba(66,133,244,0.2); border: 1px solid #4285F4; color: #93c5fd; font-size: 0.72rem;" id="side-google-status-pill">
+                    Connected
+                </span>
+            </div>
+
+            <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 14px;">
+                Real-time two-way synchronization bridge with your Google Tasks account.
+            </p>
+
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <button class="hud-btn hud-btn-primary" style="width: 100%; justify-content: center; padding: 9px;" onclick="fetchAndSyncGoogleTasks()">
+                    <i class="fas fa-sync-alt" id="side-sync-spinner"></i> Sync Google Tasks
+                </button>
+                <button class="hud-btn" style="width: 100%; justify-content: center; padding: 8px; font-size: 0.82rem;" onclick="openGoogleTasksImportModal()">
+                    <i class="fas fa-file-import" style="color: var(--arc-cyan);"></i> Quick Import / Paste Tasks
+                </button>
+                <button class="hud-btn" style="width: 100%; justify-content: center; padding: 8px; font-size: 0.82rem;" onclick="exportTasksToGoogle()">
+                    <i class="fas fa-file-export" style="color: var(--stark-gold);"></i> Export To Google Format
+                </button>
+            </div>
+        </div>
+
+        <!-- Quick 1-Click Task Initiator -->
+        <div class="stark-card">
+            <h4 style="font-family: var(--font-heading); font-size: 0.95rem; color: var(--arc-cyan); margin-bottom: 12px;">
+                <i class="fas fa-bolt"></i> QUICK DIRECTIVE
+            </h4>
+            <form onsubmit="handleQuickAddTask(event)">
+                <input type="text" id="quick-task-input" class="form-control" placeholder="Quick task title..." style="font-size: 0.85rem; margin-bottom: 8px;" required>
+                <div style="display: flex; gap: 8px;">
+                    <select id="quick-task-priority" class="form-control" style="font-size: 0.82rem; padding: 6px 10px;">
+                        <option value="High">🔴 High</option>
+                        <option value="Medium" selected>🟡 Medium</option>
+                        <option value="Low">🔵 Low</option>
+                    </select>
+                    <button type="submit" class="hud-btn hud-btn-primary" style="padding: 6px 14px; font-size: 0.85rem;">
+                        <i class="fas fa-plus"></i> Add
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Mission Tactical HUD Metrics -->
+        <div class="stark-card">
+            <h4 style="font-family: var(--font-heading); font-size: 0.95rem; color: var(--stark-gold); margin-bottom: 14px;">
+                <i class="fas fa-chart-pie"></i> MISSION METRICS
+            </h4>
+
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.85rem;">
+                <span style="color: var(--text-muted);">Total Directives:</span>
+                <span id="metric-total-tasks" style="color: #fff; font-weight: 700;">0</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.85rem;">
+                <span style="color: var(--text-muted);">Pending:</span>
+                <span id="metric-pending-tasks" style="color: var(--arc-cyan); font-weight: 700;">0</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 0.85rem;">
+                <span style="color: var(--text-muted);">Urgent / Near:</span>
+                <span id="metric-urgent-tasks" style="color: var(--stark-red); font-weight: 700;">0</span>
+            </div>
+
+            <!-- Progress Meter -->
+            <div style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 4px; display: flex; justify-content: space-between;">
+                <span>Completion Status</span>
+                <span id="metric-completion-pct" style="color: var(--hulk-green); font-weight: 600;">0%</span>
+            </div>
+            <div class="subtask-progress-bar" style="max-width: 100%;">
+                <div class="subtask-fill" id="metric-progress-bar" style="width: 0%;"></div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Modal: Quick Import Google Tasks / Text -->
+<div class="modal-overlay" id="google-import-modal">
+    <div class="modal-card" style="max-width: 520px;">
+        <div class="modal-header">
+            <h3><i class="fas fa-file-import"></i> IMPORT TASKS INTO PROTOCOL</h3>
+            <button class="modal-close" onclick="closeGoogleTasksImportModal()"><i class="fas fa-times"></i></button>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 14px;">
+            Paste tasks from Google Tasks, Keep, or syllabus (one task per line). They will be automatically structured and added to your mission slate.
+        </p>
+        <textarea id="import-tasks-text" class="form-control" rows="6" placeholder="Assignment 1: Solve Calculus problem set&#10;Physics Lab: Complete circuit simulation&#10;Read Chapter 5 Notes"></textarea>
+        
+        <div class="form-row" style="margin-top: 12px;">
+            <div class="form-group" style="margin-bottom: 0;">
+                <label style="font-size: 0.8rem;">Category</label>
+                <input type="text" id="import-category-input" class="form-control" value="Google Tasks">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+                <label style="font-size: 0.8rem;">Priority</label>
+                <select id="import-priority-input" class="form-control">
+                    <option value="High">High Priority</option>
+                    <option value="Medium" selected>Medium Priority</option>
+                    <option value="Low">Low Priority</option>
+                </select>
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px;">
+            <button class="hud-btn" onclick="closeGoogleTasksImportModal()">Cancel</button>
+            <button class="hud-btn hud-btn-primary" onclick="submitImportedTasks()"><i class="fas fa-check"></i> Import Tasks</button>
+        </div>
+    </div>
 </div>
 
 <!-- Modal: New Task Form -->

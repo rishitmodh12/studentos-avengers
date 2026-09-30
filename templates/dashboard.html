@@ -16,37 +16,82 @@
 {% block content %}
 <div id="dashboard-sections-container" style="display: flex; flex-direction: column; gap: 20px;">
 
-    <!-- Section 1: Daily Motivational Hero Banner -->
-    <div class="dash-section" id="sec-quote" data-section-id="sec-quote">
-        <div class="quote-banner" id="quote-hero-card">
-            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 4px;">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <i class="fas fa-quote-left" style="color: var(--stark-gold); font-size: 1.2rem;"></i>
-                    <span class="quote-author-tag" id="quote-category-tag">DAILY WARRIOR MOTIVATION</span>
-                </div>
-                <div style="display: flex; gap: 6px;">
-                    <button class="hud-btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="loadNewQuote()" title="Cycle Next Quote">
-                        <i class="fas fa-sync-alt"></i> Next Quote
-                    </button>
-                    <button class="hud-btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="openSuggestQuoteModal()" title="Suggest a Quote">
-                        <i class="fas fa-plus"></i> Add Quote
-                    </button>
-                </div>
-            </div>
+    <!-- Top Side-By-Side Grid: Motivational Hero Card & Daily Hanuman Chalisa Habit Deck -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 20px; align-items: stretch;">
+        
+        <!-- Section 1: Daily Motivational Hero Banner -->
+        <div class="dash-section" id="sec-quote" data-section-id="sec-quote" style="height: 100%;">
+            <div class="quote-banner" id="quote-hero-card" style="height: 100%; display: flex; flex-direction: column; justify-content: space-between; margin-bottom: 0;">
+                <div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-quote-left" style="color: var(--stark-gold); font-size: 1.1rem;"></i>
+                            <span class="quote-author-tag" id="quote-category-tag">DAILY WARRIOR MOTIVATION</span>
+                        </div>
+                        <div style="display: flex; gap: 6px;">
+                            <button class="hud-btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="loadNewQuote()" title="Cycle Next Quote">
+                                <i class="fas fa-sync-alt"></i> Next
+                            </button>
+                            <button class="hud-btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="openSuggestQuoteModal()" title="Suggest a Quote">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
 
-            <p class="quote-text" id="quote-text-display">"Self-belief and hard work will always earn you success. Whatever you want to do, do with full passion."</p>
-            <div style="text-align: right; font-size: 0.88rem; color: var(--stark-gold); font-weight: 600;" id="quote-author-display">— Virat Kohli</div>
+                    <p class="quote-text" id="quote-text-display" style="font-size: 1.05rem; margin-bottom: 8px;">"Self-belief and hard work will always earn you success. Whatever you want to do, do with full passion."</p>
+                    <div style="text-align: right; font-size: 0.85rem; color: var(--stark-gold); font-weight: 600; margin-bottom: 12px;" id="quote-author-display">— Virat Kohli</div>
+                </div>
 
-            <!-- Interactive Feedback Bar -->
-            <div class="quote-feedback-bar">
-                <span style="font-size: 0.8rem; color: var(--text-muted);"><i class="fas fa-comment-dots"></i> How does this quote motivate you today?</span>
-                <div style="display: flex; gap: 8px; align-items: center;">
-                    <button class="hud-btn" style="padding: 3px 8px; font-size: 0.78rem;" onclick="rateQuote(5, 'Super Inspiring 🔥')">🔥 Fired Up</button>
-                    <button class="hud-btn" style="padding: 3px 8px; font-size: 0.78rem;" onclick="rateQuote(4, 'Good Focus')">👍 Focused</button>
-                    <button class="hud-btn" style="padding: 3px 8px; font-size: 0.78rem;" onclick="openQuoteFeedbackModal()">✍ Give Feedback</button>
+                <!-- Interactive Feedback Bar -->
+                <div class="quote-feedback-bar" style="margin-top: 6px;">
+                    <span style="font-size: 0.78rem; color: var(--text-muted);"><i class="fas fa-comment-dots"></i> Motivated?</span>
+                    <div style="display: flex; gap: 6px; align-items: center;">
+                        <button class="hud-btn" style="padding: 3px 8px; font-size: 0.75rem;" onclick="rateQuote(5, 'Super Inspiring 🔥')">🔥 Fired Up</button>
+                        <button class="hud-btn" style="padding: 3px 8px; font-size: 0.75rem;" onclick="rateQuote(4, 'Good Focus')">👍 Focused</button>
+                        <button class="hud-btn" style="padding: 3px 8px; font-size: 0.75rem;" onclick="openQuoteFeedbackModal()">✍ Feedback</button>
+                    </div>
                 </div>
             </div>
         </div>
+
+        <!-- Section 4: Daily Hanuman Chalisa Quick Check Deck -->
+        <div class="dash-section" id="sec-habits" data-section-id="sec-habits" style="height: 100%;">
+            <div class="stark-card" style="border-left: 4px solid var(--stark-gold); background: linear-gradient(135deg, rgba(255,183,3,0.08), rgba(13,20,36,0.9)); height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="width: 42px; height: 42px; border-radius: 12px; background: rgba(255,183,3,0.15); border: 1px solid var(--stark-gold); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; color: var(--stark-gold);">
+                                <i class="fas fa-om"></i>
+                            </div>
+                            <div>
+                                <h4 style="font-family: var(--font-heading); color: #fff; font-size: 0.98rem; margin-bottom: 2px;">SHREE HANUMAN CHALISA</h4>
+                                <p style="font-size: 0.78rem; color: var(--text-muted);">Spiritual Focus & Daily Habit Streak</p>
+                            </div>
+                        </div>
+                        <span class="badge" style="background: rgba(255,183,3,0.2); border: 1px solid var(--stark-gold); color: var(--stark-gold); font-size: 0.72rem;">
+                            <i class="fas fa-bell"></i> 07:30 AM
+                        </span>
+                    </div>
+
+                    <p style="font-size: 0.85rem; color: #cbd5e1; line-height: 1.5; margin-bottom: 14px;">
+                        "बल बुद्धि बिद्या देहु मोहिं, हरहु कलेस बिकार॥" Recite daily to cultivate unstoppable courage, mental clarity and academic focus.
+                    </p>
+                </div>
+
+                <div style="display: flex; gap: 8px; justify-content: flex-end; border-top: 1px solid rgba(255,183,3,0.15); padding-top: 12px;">
+                    <button class="hud-btn" style="background: rgba(255,183,3,0.2); border-color: var(--stark-gold); color: var(--stark-gold);" onclick="openChalisaModal()">
+                        <i class="fas fa-book-open"></i> Read Chalisa
+                    </button>
+                    <button class="hud-btn hud-btn-primary" onclick="markChalisaDoneToday()">
+                        <i class="fas fa-check-circle"></i> Mark Done
+                    </button>
+                    <a href="/habits" class="hud-btn" title="View Full Habits">
+                        <i class="fas fa-fire"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <!-- Section 2: Urgent Deadline Alert Banner -->
@@ -105,32 +150,6 @@
                 <div class="stat-info">
                     <h3 id="stat-completed-tasks">0</h3>
                     <p>Completed Missions</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Section 4: Daily Hanuman Chalisa Quick Check Deck -->
-    <div class="dash-section" id="sec-habits" data-section-id="sec-habits">
-        <div class="stark-card" style="border-left: 4px solid var(--stark-gold); background: linear-gradient(135deg, rgba(255,183,3,0.06), rgba(13,20,36,0.85));">
-            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(255,183,3,0.15); border: 1px solid var(--stark-gold); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; color: var(--stark-gold);">
-                        <i class="fas fa-om"></i>
-                    </div>
-                    <div>
-                        <h4 style="font-family: var(--font-heading); color: #fff; font-size: 1.05rem; margin-bottom: 2px;">DAILY HANUMAN CHALISA & ROUTINE</h4>
-                        <p style="font-size: 0.82rem; color: var(--text-muted);">Protect your spiritual focus & daily discipline streak</p>
-                    </div>
-                </div>
-
-                <div style="display: flex; gap: 8px;">
-                    <button class="hud-btn" style="background: rgba(255,183,3,0.18); border-color: var(--stark-gold); color: var(--stark-gold);" onclick="openChalisaModal()">
-                        <i class="fas fa-book-open"></i> Read Chalisa
-                    </button>
-                    <a href="/habits" class="hud-btn">
-                        <i class="fas fa-fire"></i> Habit Tracker
-                    </a>
                 </div>
             </div>
         </div>
