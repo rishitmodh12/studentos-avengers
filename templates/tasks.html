@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
 
-{% block title %}Google Tasks HQ // AVENGERS HQ{% endblock %}
-{% block page_title %}MISSION TASK PROTOCOLS{% endblock %}
-{% block page_subtitle %}Google Tasks enhanced interface with tactical subtasks, deadline alerts & priority tags{% endblock %}
+{% block title %}Tasks Protocol // AVENGERS HQ{% endblock %}
+{% block page_title %}TASKS PROTOCOL{% endblock %}
+{% block page_subtitle %}Subtasks, priorities & deadline timers{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -54,7 +54,7 @@
 
 {% block header_actions %}
 <button class="hud-btn hud-btn-primary" onclick="openTaskModal()">
-    <i class="fas fa-plus"></i> Initialize New Task
+    <i class="fas fa-plus"></i> New Task
 </button>
 {% endblock %}
 
@@ -99,38 +99,38 @@
             <h3 style="font-family: var(--font-heading); color: #fff; margin-bottom: 8px;">No Mission Tasks Found</h3>
             <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 20px;">Your task slate is clean, or matching filters returned zero results.</p>
             <button class="hud-btn hud-btn-primary" onclick="openTaskModal()">
-                <i class="fas fa-plus"></i> Create Mission Directive
+                <i class="fas fa-plus"></i> Create Directive
             </button>
         </div>
     </div>
 
-    <!-- Right Column: Google Tasks Sync Matrix & HUD Stats -->
+    <!-- Right Column: User Cloud HUD & Stats -->
     <div style="display: flex; flex-direction: column; gap: 18px;">
         
-        <!-- Google Tasks Cloud Sync Card -->
+        <!-- User Cloud Workspace Card -->
         <div class="stark-card" style="border-top: 3px solid #4285F4; background: linear-gradient(135deg, rgba(66,133,244,0.08), rgba(13,20,36,0.85));">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
-                <h4 style="font-family: var(--font-heading); font-size: 0.95rem; color: #fff; display: flex; align-items: center; gap: 8px;">
-                    <i class="fab fa-google" style="color: #4285F4; font-size: 1.1rem;"></i> GOOGLE TASKS SYNC
+                <h4 style="font-family: var(--font-heading); font-size: 0.92rem; color: #fff; display: flex; align-items: center; gap: 8px;">
+                    <i class="fab fa-google" style="color: #4285F4; font-size: 1.05rem;"></i> USER CLOUD DATA
                 </h4>
                 <span class="badge" style="background: rgba(66,133,244,0.2); border: 1px solid #4285F4; color: #93c5fd; font-size: 0.72rem;" id="side-google-status-pill">
                     Connected
                 </span>
             </div>
 
-            <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 14px;">
-                Real-time two-way synchronization bridge with your Google Tasks account.
+            <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 14px;" id="side-user-email-text">
+                Tasks & progress are securely saved and isolated under your Google Account.
             </p>
 
             <div style="display: flex; flex-direction: column; gap: 8px;">
-                <button class="hud-btn hud-btn-primary" style="width: 100%; justify-content: center; padding: 9px;" onclick="fetchAndSyncGoogleTasks()">
-                    <i class="fas fa-sync-alt" id="side-sync-spinner"></i> Sync Google Tasks
+                <button class="hud-btn hud-btn-primary" style="width: 100%; justify-content: center; padding: 8px; font-size: 0.82rem;" onclick="openGoogleTasksModal()">
+                    <i class="fas fa-user-circle"></i> Switch / Login Google ID
                 </button>
                 <button class="hud-btn" style="width: 100%; justify-content: center; padding: 8px; font-size: 0.82rem;" onclick="openGoogleTasksImportModal()">
                     <i class="fas fa-file-import" style="color: var(--arc-cyan);"></i> Quick Import / Paste Tasks
                 </button>
                 <button class="hud-btn" style="width: 100%; justify-content: center; padding: 8px; font-size: 0.82rem;" onclick="exportTasksToGoogle()">
-                    <i class="fas fa-file-export" style="color: var(--stark-gold);"></i> Export To Google Format
+                    <i class="fas fa-file-export" style="color: var(--stark-gold);"></i> Export Tasks JSON
                 </button>
             </div>
         </div>

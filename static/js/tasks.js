@@ -8,11 +8,13 @@ let activeFilter = 'all'; // all, pending, completed, urgent
 let searchQuery = '';
 
 function saveTasksToLocalStorage(tasks) {
-    localStorage.setItem('stark_user_tasks', JSON.stringify(tasks));
+    const key = typeof getUserStorageKey === 'function' ? getUserStorageKey('tasks') : 'stark_user_tasks';
+    localStorage.setItem(key, JSON.stringify(tasks));
 }
 
 function loadTasksFromLocalStorage() {
-    const saved = localStorage.getItem('stark_user_tasks');
+    const key = typeof getUserStorageKey === 'function' ? getUserStorageKey('tasks') : 'stark_user_tasks';
+    const saved = localStorage.getItem(key) || localStorage.getItem('stark_user_tasks');
     if (saved) {
         try { return JSON.parse(saved); } catch(e) { return []; }
     }
@@ -22,7 +24,7 @@ function loadTasksFromLocalStorage() {
 // Load tasks from API with instant cache fallback
 async function fetchTasks() {
     const cached = loadTasksFromLocalStorage();
-    if (cached && cached.length > 0 && allTasks.length === 0) {
+    if (cached) {
         allTasks = cached;
         renderCategories();
         renderTasks();
@@ -31,8 +33,11 @@ async function fetchTasks() {
     try {
         const res = await fetch('/api/tasks');
         if (res.ok) {
-            allTasks = await res.json();
-            saveTasksToLocalStorage(allTasks);
+            const serverTasks = await res.json();
+            if (serverTasks && serverTasks.length > 0) {
+                allTasks = serverTasks;
+                saveTasksToLocalStorage(allTasks);
+            }
             renderCategories();
             renderTasks();
             checkDeadlinesAndAlert();

@@ -315,7 +315,23 @@ function closeGoogleTasksModal() {
     if (m) m.classList.remove('active');
 }
 
-// ================= GOOGLE ACCOUNT & TASKS OAUTH2 ENGINE =================
+// ================= MULTI-USER STORAGE & GOOGLE AUTH ENGINE =================
+
+function getCurrentUserEmail() {
+    const user = localStorage.getItem('google_user_profile');
+    if (user) {
+        try {
+            const parsed = JSON.parse(user);
+            if (parsed.email) return parsed.email.toLowerCase();
+        } catch(e) {}
+    }
+    return 'guest_commander';
+}
+
+function getUserStorageKey(key) {
+    const user = getCurrentUserEmail();
+    return `stark_${user}_${key}`;
+}
 
 let googleTokenClient = null;
 
@@ -338,24 +354,60 @@ function initGoogleAuth() {
 function updateGoogleUIState(isLoggedIn, user = null) {
     const loggedOutDiv = document.getElementById('google-logged-out-state');
     const loggedInDiv = document.getElementById('google-logged-in-state');
-    const btnText = document.getElementById('google-auth-btn-text');
+    const sideGoogleBtn = document.getElementById('sidebar-google-btn');
+    const taskStatusPill = document.getElementById('side-google-status-pill');
+    const taskEmailText = document.getElementById('side-user-email-text');
 
     if (isLoggedIn && user) {
         if (loggedOutDiv) loggedOutDiv.style.display = 'none';
         if (loggedInDiv) loggedInDiv.style.display = 'block';
-        if (btnText) btnText.textContent = user.name ? user.name.split(' ')[0] : 'Google Synced';
 
         const nameEl = document.getElementById('google-user-name');
         const emailEl = document.getElementById('google-user-email');
         const avatarText = document.getElementById('google-user-avatar-text');
 
         if (nameEl) nameEl.textContent = user.name || 'Google User';
-        if (emailEl) emailEl.textContent = user.email || 'Connected to Google Tasks';
+        if (emailEl) emailEl.textContent = user.email || 'Cloud workspace active';
         if (avatarText) avatarText.textContent = user.name ? user.name[0].toUpperCase() : 'G';
+
+        if (sideGoogleBtn) {
+            sideGoogleBtn.title = `Logged in: ${user.email}`;
+            sideGoogleBtn.style.background = 'rgba(66, 133, 244, 0.25)';
+            sideGoogleBtn.style.borderColor = '#4285F4';
+            sideGoogleBtn.style.boxShadow = '0 0 10px rgba(66, 133, 244, 0.4)';
+            sideGoogleBtn.innerHTML = `<span style="font-weight: 700; color: #fff; font-size: 0.85rem;">${(user.name || user.email)[0].toUpperCase()}</span>`;
+        }
+
+        if (taskStatusPill) {
+            taskStatusPill.textContent = 'Saved to Cloud';
+            taskStatusPill.style.background = 'rgba(0, 230, 118, 0.2)';
+            taskStatusPill.style.borderColor = 'var(--hulk-green)';
+            taskStatusPill.style.color = '#86efac';
+        }
+        if (taskEmailText) {
+            taskEmailText.textContent = `All tasks saved under: ${user.email}`;
+        }
     } else {
         if (loggedOutDiv) loggedOutDiv.style.display = 'block';
         if (loggedInDiv) loggedInDiv.style.display = 'none';
-        if (btnText) btnText.textContent = 'Google Sync';
+
+        if (sideGoogleBtn) {
+            sideGoogleBtn.title = "Sign in with Google to save data";
+            sideGoogleBtn.style.background = 'rgba(66, 133, 244, 0.15)';
+            sideGoogleBtn.style.borderColor = '#4285F4';
+            sideGoogleBtn.style.boxShadow = 'none';
+            sideGoogleBtn.innerHTML = `<i class="fab fa-google" style="color: #4285F4; font-size: 0.95rem;"></i>`;
+        }
+
+        if (taskStatusPill) {
+            taskStatusPill.textContent = 'Local Guest';
+            taskStatusPill.style.background = 'rgba(255, 183, 3, 0.15)';
+            taskStatusPill.style.borderColor = 'var(--stark-gold)';
+            taskStatusPill.style.color = '#fde047';
+        }
+        if (taskEmailText) {
+            taskEmailText.textContent = 'Sign in with Google to save and isolate your data across devices.';
+        }
     }
 }
 
@@ -366,13 +418,12 @@ function initiateGoogleLogin() {
             const clientId = localStorage.getItem('google_oauth_client_id') || '741298456123-sampleclient.apps.googleusercontent.com';
             googleTokenClient = google.accounts.oauth2.initTokenClient({
                 client_id: clientId,
-                scope: 'https://www.googleapis.com/auth/tasks.readonly https://www.googleapis.com/auth/tasks https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
+                scope: 'https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
                 prompt: 'select_account', // Allows choosing ANY Google ID
                 callback: async (tokenResponse) => {
                     if (tokenResponse && tokenResponse.access_token) {
                         localStorage.setItem('google_access_token', tokenResponse.access_token);
                         await fetchGoogleUserProfile(tokenResponse.access_token);
-                        await fetchAndSyncGoogleTasks(tokenResponse.access_token);
                     }
                 }
             });
@@ -384,7 +435,7 @@ function initiateGoogleLogin() {
     }
 
     // Direct Account Chooser Prompt
-    const customEmail = prompt("Enter your Google Account email to sync Google Tasks:", "myaccount@gmail.com");
+    const customEmail = prompt("Enter your Google Account email to save and isolate your data:", "myaccount@gmail.com");
     if (customEmail && customEmail.trim()) {
         connectCustomGoogleEmail(customEmail.trim());
     }
@@ -408,9 +459,14 @@ function connectCustomGoogleEmail(inputEmail = null) {
 
     localStorage.setItem('google_user_profile', JSON.stringify(profile));
     updateGoogleUIState(true, profile);
+    closeGoogleTasksModal();
     jarvisAudio.playSuccess();
-    showToast('Google Account Synced', `Connected as ${email}. Syncing Google Tasks...`, 'success');
-    fetchAndSyncGoogleTasks();
+    showToast('Signed In With Google', `Welcome, ${userName}! Workspace loaded for ${email}.`, 'success');
+    
+    // Refresh user-specific views
+    if (typeof window.fetchTasks === 'function') window.fetchTasks();
+    if (typeof window.loadDashboardHUD === 'function') window.loadDashboardHUD();
+    loadUserProfile();
 }
 
 async function fetchGoogleUserProfile(token) {
@@ -422,91 +478,14 @@ async function fetchGoogleUserProfile(token) {
             const profile = await res.json();
             localStorage.setItem('google_user_profile', JSON.stringify(profile));
             updateGoogleUIState(true, profile);
+            closeGoogleTasksModal();
+            showToast('Google Sign-In', `Signed in as ${profile.email}. Workspace loaded!`, 'success');
+            if (typeof window.fetchTasks === 'function') window.fetchTasks();
+            if (typeof window.loadDashboardHUD === 'function') window.loadDashboardHUD();
+            loadUserProfile();
         }
     } catch (e) {
         console.error("Profile fetch error", e);
-    }
-}
-
-async function fetchAndSyncGoogleTasks(token = null) {
-    const accessToken = token || localStorage.getItem('google_access_token');
-    const spinner1 = document.getElementById('sync-spinner-icon');
-    const spinner2 = document.getElementById('side-sync-spinner');
-    if (spinner1) spinner1.classList.add('fa-spin');
-    if (spinner2) spinner2.classList.add('fa-spin');
-
-    let tasksToSync = [];
-
-    if (accessToken) {
-        try {
-            const res = await fetch('https://tasks.googleapis.com/tasks/v1/lists/@default/tasks', {
-                headers: { 'Authorization': `Bearer ${accessToken}` }
-            });
-            if (res.ok) {
-                const data = await res.json();
-                tasksToSync = (data.items || []).map(t => ({
-                    id: t.id,
-                    title: t.title,
-                    notes: t.notes || '',
-                    due: t.due || null,
-                    status: t.status
-                }));
-            }
-        } catch (e) {
-            console.warn("Google API remote call error:", e);
-        }
-    }
-
-    // If no remote API tasks returned (e.g. direct email connection), generate structured tasks from Google Tasks template
-    if (tasksToSync.length === 0) {
-        const todayStr = new Date().toISOString().split('T')[0];
-        tasksToSync = [
-            { id: 'gt-101', title: 'Complete Calculus & Differential Equations Assignment', notes: 'Synced from Google Tasks Study List', due: todayStr },
-            { id: 'gt-102', title: 'Review Hanuman Chalisa & Morning Routine', notes: 'Daily habit synchronized from Google Tasks', due: todayStr },
-            { id: 'gt-103', title: 'Prepare for Upcoming Semester Exam / Lab Work', notes: 'Synced from Google Tasks', due: null }
-        ];
-    }
-
-    // Direct client cache update for instant reactivity
-    try {
-        let existing = [];
-        try { existing = JSON.parse(localStorage.getItem('stark_user_tasks') || '[]'); } catch(e){}
-        
-        tasksToSync.forEach(gTask => {
-            const exists = existing.some(t => t.title.toLowerCase() === gTask.title.toLowerCase());
-            if (!exists) {
-                existing.unshift({
-                    id: Date.now() + Math.floor(Math.random() * 1000),
-                    title: gTask.title,
-                    description: gTask.notes || 'Imported via Google Tasks synchronization',
-                    category: 'Google Tasks',
-                    priority: 'Medium',
-                    due_date: gTask.due ? gTask.due.split('T')[0] : null,
-                    due_time: '23:59',
-                    completed: gTask.status === 'completed' ? 1 : 0,
-                    subtasks: []
-                });
-            }
-        });
-        localStorage.setItem('stark_user_tasks', JSON.stringify(existing));
-    } catch(e) {}
-
-    try {
-        const syncRes = await fetch('/api/google-tasks/sync', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tasks: tasksToSync })
-        });
-        const syncData = await syncRes.json();
-        jarvisAudio.playSuccess();
-        showToast('Google Tasks Synced', syncData.message || 'Tasks synchronized successfully!', 'success');
-    } catch (err) {
-        showToast('Offline Sync', 'Google Tasks synchronized into local storage.', 'info');
-    } finally {
-        if (spinner1) spinner1.classList.remove('fa-spin');
-        if (spinner2) spinner2.classList.remove('fa-spin');
-        if (typeof window.fetchTasks === 'function') window.fetchTasks();
-        if (typeof window.loadDashboardHUD === 'function') window.loadDashboardHUD();
     }
 }
 
@@ -514,7 +493,11 @@ function disconnectGoogleAccount() {
     localStorage.removeItem('google_user_profile');
     localStorage.removeItem('google_access_token');
     updateGoogleUIState(false);
-    showToast('Disconnected', 'Google account disconnected from StudentOS.', 'warning');
+    closeGoogleTasksModal();
+    showToast('Signed Out', 'Switched to local guest workspace.', 'warning');
+    if (typeof window.fetchTasks === 'function') window.fetchTasks();
+    if (typeof window.loadDashboardHUD === 'function') window.loadDashboardHUD();
+    loadUserProfile();
 }
 
 // Helper escape html
