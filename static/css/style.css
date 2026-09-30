@@ -179,10 +179,9 @@ body::before {
 
 .nav-link:hover {
     color: #ffffff;
-    background: rgba(0, 242, 254, 0.08);
-    border-color: rgba(0, 242, 254, 0.25);
-    transform: translateX(4px);
-    box-shadow: 0 0 12px rgba(0, 242, 254, 0.15);
+    background: rgba(0, 242, 254, 0.1);
+    border-color: rgba(0, 242, 254, 0.35);
+    box-shadow: 0 0 12px rgba(0, 242, 254, 0.2);
 }
 
 .nav-link.active {
@@ -254,14 +253,17 @@ body::before {
     flex-direction: column;
     height: 100vh;
     overflow-y: auto;
+    scroll-behavior: smooth;
+    transform: translateZ(0);
 }
 
 /* Top Header */
 .top-header {
     min-height: 70px;
     padding: 0 30px;
-    background: rgba(7, 12, 24, 0.9);
-    backdrop-filter: blur(14px);
+    background: rgba(7, 12, 24, 0.92);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     border-bottom: 1px solid var(--border-color);
     display: flex;
     align-items: center;
@@ -270,6 +272,7 @@ body::before {
     top: 0;
     z-index: 90;
     gap: 16px;
+    contain: paint;
 }
 
 .page-headline {
@@ -325,8 +328,7 @@ body::before {
 .hud-btn:hover {
     border-color: var(--arc-cyan);
     color: var(--arc-cyan);
-    box-shadow: 0 0 12px rgba(0, 242, 254, 0.3);
-    transform: translateY(-2px);
+    box-shadow: 0 0 14px rgba(0, 242, 254, 0.35);
 }
 
 .hud-btn-primary {
@@ -396,16 +398,16 @@ body::before {
     border-radius: 14px;
     padding: 22px;
     box-shadow: var(--shadow-hud);
-    transition: var(--transition-smooth);
+    transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
     position: relative;
     overflow: hidden;
+    transform: translateZ(0);
 }
 
 .stark-card:hover {
     border-color: var(--border-glow);
     background: var(--bg-card-hover);
-    transform: translateY(-3px);
-    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.6), 0 0 20px rgba(0, 242, 254, 0.2);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6), 0 0 20px rgba(0, 242, 254, 0.25);
 }
 
 /* Stat Grid */

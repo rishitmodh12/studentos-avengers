@@ -216,6 +216,91 @@ async function markChalisaDoneToday() {
     }
 }
 
+// ================= HERO PROFILE & AVATAR ENGINE =================
+
+let selectedAvatarData = {
+    avatar: 'ironman',
+    icon: 'fas fa-atom',
+    color: '#ff2a4d'
+};
+
+function openProfileModal() {
+    const m = document.getElementById('profile-modal');
+    if (m) {
+        m.classList.add('active');
+        const user = JSON.parse(localStorage.getItem('stark_user_profile') || '{"name":"Commander Rishit","avatar":"ironman"}');
+        const nameInput = document.getElementById('profile-name-input');
+        if (nameInput) nameInput.value = user.name || 'Commander Rishit';
+        jarvisAudio.playClick();
+    }
+}
+
+function closeProfileModal() {
+    const m = document.getElementById('profile-modal');
+    if (m) m.classList.remove('active');
+}
+
+function selectAvatarOption(el) {
+    document.querySelectorAll('.avatar-option').forEach(opt => {
+        opt.classList.remove('active');
+        opt.style.borderColor = 'rgba(0,242,254,0.2)';
+    });
+    el.classList.add('active');
+    const color = el.dataset.color || '#00f2fe';
+    el.style.borderColor = color;
+    selectedAvatarData = {
+        avatar: el.dataset.avatar,
+        icon: el.dataset.icon,
+        color: color
+    };
+    jarvisAudio.playClick();
+}
+
+function saveUserProfile(e) {
+    if (e) e.preventDefault();
+    const nameInput = document.getElementById('profile-name-input');
+    const imgUrlInput = document.getElementById('profile-img-url-input');
+    const name = nameInput ? nameInput.value.trim() : 'Commander';
+    const customImg = imgUrlInput ? imgUrlInput.value.trim() : '';
+
+    const profileData = {
+        name: name,
+        avatar: selectedAvatarData.avatar,
+        icon: selectedAvatarData.icon,
+        color: selectedAvatarData.color,
+        customImg: customImg
+    };
+
+    localStorage.setItem('stark_user_profile', JSON.stringify(profileData));
+    loadUserProfile();
+    closeProfileModal();
+    jarvisAudio.playSuccess();
+    showToast('Profile Initialized', `Welcome, ${name}! Avatar updated.`, 'success');
+}
+
+function loadUserProfile() {
+    const saved = localStorage.getItem('stark_user_profile');
+    const user = saved ? JSON.parse(saved) : { name: 'Commander Rishit', avatar: 'ironman', icon: 'fas fa-atom', color: '#ff2a4d' };
+
+    const nameEl = document.getElementById('header-user-name');
+    const badgeEl = document.getElementById('header-avatar-badge');
+    const initialEl = document.getElementById('header-avatar-initial');
+
+    if (nameEl) nameEl.textContent = user.name || 'Commander';
+
+    if (badgeEl) {
+        if (user.customImg) {
+            badgeEl.innerHTML = `<img src="${user.customImg}" style="width:100%; height:100%; object-fit:cover;">`;
+        } else if (user.icon) {
+            badgeEl.innerHTML = `<i class="${user.icon}" style="color: ${user.color || '#00f2fe'}; font-size: 1rem;"></i>`;
+            badgeEl.style.background = 'rgba(10, 16, 30, 0.9)';
+            badgeEl.style.borderColor = user.color || 'var(--arc-cyan)';
+        } else {
+            if (initialEl) initialEl.textContent = user.name ? user.name[0].toUpperCase() : 'C';
+        }
+    }
+}
+
 // Google Tasks Modal Controls
 function openGoogleTasksModal() {
     const m = document.getElementById('google-tasks-modal');
@@ -234,23 +319,9 @@ function closeGoogleTasksModal() {
 
 let googleTokenClient = null;
 
-function saveCustomClientId() {
-    const input = document.getElementById('custom-client-id-input');
-    if (input && input.value.trim()) {
-        localStorage.setItem('google_oauth_client_id', input.value.trim());
-        showToast('Client ID Saved', 'Google OAuth Client ID updated.', 'success');
-        initGoogleAuth();
-    }
-}
-
 function initGoogleAuth() {
+    loadUserProfile();
     const savedProfile = localStorage.getItem('google_user_profile');
-    const clientId = localStorage.getItem('google_oauth_client_id') || '741298456123-sampleclient.apps.googleusercontent.com';
-    
-    const input = document.getElementById('custom-client-id-input');
-    if (input && localStorage.getItem('google_oauth_client_id')) {
-        input.value = localStorage.getItem('google_oauth_client_id');
-    }
 
     if (savedProfile) {
         try {
@@ -276,33 +347,27 @@ function updateGoogleUIState(isLoggedIn, user = null) {
 
         const nameEl = document.getElementById('google-user-name');
         const emailEl = document.getElementById('google-user-email');
-        const avatarEl = document.getElementById('google-user-avatar');
-        const placeholderEl = document.getElementById('google-user-avatar-placeholder');
+        const avatarText = document.getElementById('google-user-avatar-text');
 
         if (nameEl) nameEl.textContent = user.name || 'Google User';
         if (emailEl) emailEl.textContent = user.email || 'Connected to Google Tasks';
-        
-        if (user.picture && avatarEl) {
-            avatarEl.src = user.picture;
-            avatarEl.style.display = 'block';
-            if (placeholderEl) placeholderEl.style.display = 'none';
-        }
+        if (avatarText) avatarText.textContent = user.name ? user.name[0].toUpperCase() : 'G';
     } else {
         if (loggedOutDiv) loggedOutDiv.style.display = 'block';
         if (loggedInDiv) loggedInDiv.style.display = 'none';
-        if (btnText) btnText.textContent = 'Sign in with Google';
+        if (btnText) btnText.textContent = 'Google Sync';
     }
 }
 
 function initiateGoogleLogin() {
-    const clientId = localStorage.getItem('google_oauth_client_id');
-
-    // Check if Google Identity Services is available and custom client ID is provided
-    if (window.google && window.google.accounts && window.google.accounts.oauth2 && clientId) {
+    // If Google GIS client is loaded, request token with account chooser
+    if (window.google && window.google.accounts && window.google.accounts.oauth2) {
         try {
+            const clientId = localStorage.getItem('google_oauth_client_id') || '741298456123-sampleclient.apps.googleusercontent.com';
             googleTokenClient = google.accounts.oauth2.initTokenClient({
                 client_id: clientId,
                 scope: 'https://www.googleapis.com/auth/tasks.readonly https://www.googleapis.com/auth/tasks https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
+                prompt: 'select_account', // Allows choosing ANY Google ID
                 callback: async (tokenResponse) => {
                     if (tokenResponse && tokenResponse.access_token) {
                         localStorage.setItem('google_access_token', tokenResponse.access_token);
@@ -311,23 +376,40 @@ function initiateGoogleLogin() {
                     }
                 }
             });
-            googleTokenClient.requestAccessToken({ prompt: 'consent' });
+            googleTokenClient.requestAccessToken({ prompt: 'select_account' });
             return;
         } catch (err) {
-            console.warn("GIS token client error:", err);
+            console.warn("GIS token client fallback", err);
         }
     }
 
-    // Instant One-Click Google Authentication Simulation & Direct Sync
-    const simulatedUser = {
-        name: 'Rishit Modh',
-        email: 'rishitmodh@gmail.com',
+    // Direct Account Chooser Prompt
+    const customEmail = prompt("Enter your Google Account email to sync Google Tasks:", "myaccount@gmail.com");
+    if (customEmail && customEmail.trim()) {
+        connectCustomGoogleEmail(customEmail.trim());
+    }
+}
+
+function connectCustomGoogleEmail(inputEmail = null) {
+    const emailField = document.getElementById('custom-google-email-input');
+    const email = inputEmail || (emailField ? emailField.value.trim() : '');
+    
+    if (!email) {
+        showToast('Validation Error', 'Please enter a valid Google Account email.', 'warning');
+        return;
+    }
+
+    const userName = email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    const profile = {
+        name: userName,
+        email: email,
         picture: ''
     };
-    localStorage.setItem('google_user_profile', JSON.stringify(simulatedUser));
-    updateGoogleUIState(true, simulatedUser);
+
+    localStorage.setItem('google_user_profile', JSON.stringify(profile));
+    updateGoogleUIState(true, profile);
     jarvisAudio.playSuccess();
-    showToast('Google Account Connected', 'Logged in as Rishit Modh. Syncing Google Tasks...', 'success');
+    showToast('Google Account Synced', `Connected as ${email}. Syncing Google Tasks...`, 'success');
     fetchAndSyncGoogleTasks();
 }
 

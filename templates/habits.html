@@ -115,16 +115,20 @@ function renderHabits() {
                         <p style="font-size: 0.88rem; color: var(--text-muted);">${escapeHtml(h.description || '')}</p>
                     </div>
 
-                    <div style="display: flex; gap: 10px; align-items: center;">
+                    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                         ${h.name.includes('Hanuman') ? `
                             <button class="hud-btn" style="background: rgba(255,183,3,0.15); border-color: var(--stark-gold); color: var(--stark-gold);" onclick="openChalisaModal()">
                                 <i class="fas fa-book-open"></i> Read Chalisa
                             </button>
                         ` : ''}
 
-                        <button class="hud-btn ${isDoneToday ? 'hud-btn-primary' : ''}" style="padding: 9px 16px;" onclick="toggleHabitDay(${h.id}, '${todayStr}')">
+                        <button class="hud-btn ${isDoneToday ? 'hud-btn-primary' : ''}" style="padding: 8px 14px;" onclick="toggleHabitDay(${h.id}, '${todayStr}')">
                             <i class="fas ${isDoneToday ? 'fa-check-circle' : 'fa-circle'}"></i> 
                             ${isDoneToday ? 'Done Today ✔' : 'Mark Done Today'}
+                        </button>
+
+                        <button class="hud-btn hud-btn-danger" style="padding: 8px 10px;" onclick="deleteHabit(${h.id})" title="Delete this routine habit">
+                            <i class="fas fa-trash-alt"></i>
                         </button>
                     </div>
                 </div>
@@ -202,6 +206,20 @@ function openHabitModal() {
 function closeHabitModal() {
     const m = document.getElementById('habit-modal');
     if (m) m.classList.remove('active');
+}
+
+async function deleteHabit(habitId) {
+    if (!confirm('Are you sure you want to delete this habit and all its streak history?')) return;
+    try {
+        const res = await fetch(`/api/habits/${habitId}`, { method: 'DELETE' });
+        if (res.ok) {
+            jarvisAudio.playClick();
+            showToast('Habit Deleted', 'Habit and log history purged.', 'warning');
+            fetchHabits();
+        }
+    } catch (e) {
+        showToast('Error', 'Failed to delete habit', 'danger');
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {

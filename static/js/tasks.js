@@ -7,17 +7,38 @@ let activeCategory = 'All';
 let activeFilter = 'all'; // all, pending, completed, urgent
 let searchQuery = '';
 
-// Load tasks from API
+function saveTasksToLocalStorage(tasks) {
+    localStorage.setItem('stark_user_tasks', JSON.stringify(tasks));
+}
+
+function loadTasksFromLocalStorage() {
+    const saved = localStorage.getItem('stark_user_tasks');
+    if (saved) {
+        try { return JSON.parse(saved); } catch(e) { return []; }
+    }
+    return [];
+}
+
+// Load tasks from API with instant cache fallback
 async function fetchTasks() {
-    try {
-        const res = await fetch('/api/tasks');
-        allTasks = await res.json();
+    const cached = loadTasksFromLocalStorage();
+    if (cached && cached.length > 0 && allTasks.length === 0) {
+        allTasks = cached;
         renderCategories();
         renderTasks();
-        checkDeadlinesAndAlert();
+    }
+
+    try {
+        const res = await fetch('/api/tasks');
+        if (res.ok) {
+            allTasks = await res.json();
+            saveTasksToLocalStorage(allTasks);
+            renderCategories();
+            renderTasks();
+            checkDeadlinesAndAlert();
+        }
     } catch (err) {
-        console.error('Error fetching tasks:', err);
-        showToast('System Error', 'Failed to retrieve mission protocols.', 'danger');
+        console.warn('Network offline, using cached tasks:', err);
     }
 }
 

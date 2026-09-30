@@ -199,11 +199,6 @@ def init_db():
             conn.commit()
 
 def seed_initial_data(cursor):
-    today = date.today().isoformat()
-    yesterday = (date.today() - timedelta(days=1)).isoformat()
-    two_days_ago = (date.today() - timedelta(days=2)).isoformat()
-    three_days_ago = (date.today() - timedelta(days=3)).isoformat()
-
     # 1. Quotes (Virat Kohli, Raj Shamani, Tony Stark, Spiritual & Legends)
     quotes = [
         ("Self-belief and hard work will always earn you success. Whatever you want to do, do with full passion.", "Virat Kohli", "Virat Kohli"),
@@ -218,71 +213,11 @@ def seed_initial_data(cursor):
     for q, a, cat in quotes:
         cursor.execute('INSERT INTO quotes (quote, author, category) VALUES (?, ?, ?)', (q, a, cat))
 
-    # 2. Habit: Hanuman Chalisa Daily
+    # 2. Default Core Habit Template: Hanuman Chalisa
     cursor.execute('''
         INSERT INTO habits (name, description, reminder_time, target_days, category, active)
         VALUES 
-        ('Read Hanuman Chalisa', 'Daily recitation for mental strength, focus, courage and positive aura.', '07:30', 'Everyday', 'Spiritual & Focus', 1),
-        ('Morning Deep Workout', 'Cardio, strength training and posture building.', '06:30', 'Everyday', 'Physical', 1),
-        ('Read 10 Pages of Book/Notes', 'Continuous daily learning and knowledge enhancement.', '21:30', 'Everyday', 'Study', 1)
-    ''')
-    
-    cursor.execute('SELECT id FROM habits WHERE name = "Read Hanuman Chalisa"')
-    hc_id = cursor.fetchone()[0]
-    # Seed streaks for Hanuman Chalisa (past 3 days completed)
-    for past_d in [three_days_ago, two_days_ago, yesterday, today]:
-        cursor.execute('INSERT OR IGNORE INTO habit_logs (habit_id, log_date, completed, notes) VALUES (?, ?, 1, ?)', 
-                       (hc_id, past_d, 'Recited with full devotion'))
-
-    # 3. Events & Schedule (Separate from tasks)
-    tomorrow = (date.today() + timedelta(days=1)).isoformat()
-    cursor.execute('''
-        INSERT INTO events (title, event_type, subject, event_date, start_time, end_time, location, notes, color_code)
-        VALUES
-        ('Quantum Mechanics Lecture', 'Class', 'Physics', ?, '09:00', '10:30', 'Hall A-102', 'Bring notebook & formula sheet', '#00f2fe'),
-        ('AI & Machine Learning Lab', 'Class', 'Computer Science', ?, '11:00', '13:00', 'Lab 4', 'Hands-on neural network practice', '#ffb703'),
-        ('Annual Tech Hackathon Briefing', 'Event', 'Extracurricular', ?, '15:00', '16:30', 'Auditorium', 'Team strategy discussion', '#ff2a4d'),
-        ('Discrete Math Group Study Block', 'Study Block', 'Mathematics', ?, '17:30', '19:00', 'Library 2nd Floor', 'Solve problem sets together', '#9d4edd')
-    ''', (today, today, tomorrow, tomorrow))
-
-    # 4. Goals
-    cursor.execute('''
-        INSERT INTO goals (title, category, target_date, progress, status)
-        VALUES
-        ('Maintain 90%+ CGPA in Semester', 'Academic', '2026-12-31', 85, 'In Progress'),
-        ('Complete 100-Day Hanuman Chalisa & Focus Streak', 'Personal & Spiritual', '2026-12-31', 40, 'In Progress'),
-        ('Deploy StudentOS on Vercel with Google Tasks Sync', 'Project & Career', '2026-10-15', 95, 'In Progress')
-    ''')
-
-    # 5. Exams
-    cursor.execute('''
-        INSERT INTO exams (title, subject, exam_date, exam_time, syllabus_checklist, target_grade)
-        VALUES
-        ('Physics Semester End Exam', 'Physics', '2026-11-20', '10:00', 'Wave Mechanics, Thermodynamics, Quantum Basics', 'A+'),
-        ('Data Structures & Algorithms Mid-Term', 'Computer Science', '2026-10-25', '14:00', 'Trees, Graphs, Dynamic Programming', 'O')
-    ''')
-
-    # 6. Sample Tasks
-    cursor.execute('''
-        INSERT INTO tasks (title, description, category, priority, due_date, due_time, completed)
-        VALUES
-        ('Submit Physics Lab Assignment', 'Write up observations on quantum spin measurements.', 'Studies', 'High', ?, '18:00', 0),
-        ('Prepare Hackathon Architecture', 'Design database schemas and API endpoints.', 'Project', 'High', ?, '22:00', 0),
-        ('Review Daily Notes & Hanuman Chalisa', 'Check daily streak and organize notes by subject.', 'Personal', 'Medium', ?, '21:00', 0)
-    ''', (today, today, today))
-
-    cursor.execute('SELECT id FROM tasks LIMIT 2')
-    t_ids = [r[0] for r in cursor.fetchall()]
-    if len(t_ids) >= 1:
-        cursor.execute('INSERT INTO subtasks (task_id, title, completed) VALUES (?, ?, 1)', (t_ids[0], 'Export graph plots'))
-        cursor.execute('INSERT INTO subtasks (task_id, title, completed) VALUES (?, ?, 0)', (t_ids[0], 'Write conclusion & references'))
-
-    # 7. Sample Notes
-    cursor.execute('''
-        INSERT INTO notes (title, content, subject, tags)
-        VALUES
-        ('Quantum Mechanics Core Equations', 'Schrodinger Wave Equation: H|psi> = E|psi>\nKey principles: Superposition, Uncertainty Principle (dx*dp >= hbar/2).', 'Physics', 'formula,exam,quantum'),
-        ('Raj Shamani Podcast Takeaways', '1. Execution beats perfection every single day.\n2. Learn to communicate your thoughts with clarity.\n3. Build your daily discipline muscle.', 'Wisdom', 'motivation,habits')
+        ('Read Hanuman Chalisa', 'Daily recitation for mental strength, focus, courage and positive aura.', '07:30', 'Everyday', 'Spiritual & Focus', 1)
     ''')
 
 def allowed_file(filename):
@@ -662,6 +597,15 @@ def create_habit():
         conn.commit()
         hid = cursor.lastrowid
     return jsonify({'message': 'Habit registered', 'id': hid}), 201
+
+@app.route('/api/habits/<int:habit_id>', methods=['DELETE'])
+def delete_habit(habit_id):
+    with get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM habit_logs WHERE habit_id = ?', (habit_id,))
+        cursor.execute('DELETE FROM habits WHERE id = ?', (habit_id,))
+        conn.commit()
+    return jsonify({'message': 'Habit deleted successfully'})
 
 # ================= API: MOTIVATIONAL QUOTES & FEEDBACK ENGINE =================
 

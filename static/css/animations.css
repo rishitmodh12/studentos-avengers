@@ -200,8 +200,7 @@
 .task-item:hover {
     border-color: var(--arc-cyan);
     background: rgba(16, 26, 50, 0.9);
-    transform: translateX(6px);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4), 0 0 15px rgba(0, 242, 254, 0.2);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4), 0 0 15px rgba(0, 242, 254, 0.2);
 }
 
 .task-item.completed {

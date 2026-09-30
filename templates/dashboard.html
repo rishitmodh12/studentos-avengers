@@ -5,127 +5,193 @@
 {% block page_subtitle %}Mission control: schedule, deadlines, habits, and daily inspiration{% endblock %}
 
 {% block header_actions %}
+<button class="hud-btn" onclick="openSectionReorderModal()" title="Customize & Reorder Dashboard Sections">
+    <i class="fas fa-sort-amount-down"></i> <span class="desktop-only">Reorder Sections</span>
+</button>
 <a href="/tasks" class="hud-btn hud-btn-primary">
     <i class="fas fa-plus"></i> New Task
 </a>
 {% endblock %}
 
 {% block content %}
-<!-- Daily Motivational Hero Banner (Virat Kohli / Raj Shamani / Legends) with Feedback Engine -->
-<div class="quote-banner" id="quote-hero-card">
-    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 4px;">
-        <div style="display: flex; align-items: center; gap: 8px;">
-            <i class="fas fa-quote-left" style="color: var(--stark-gold); font-size: 1.2rem;"></i>
-            <span class="quote-author-tag" id="quote-category-tag">DAILY WARRIOR MOTIVATION</span>
-        </div>
-        <div style="display: flex; gap: 6px;">
-            <button class="hud-btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="loadNewQuote()" title="Cycle Next Quote">
-                <i class="fas fa-sync-alt"></i> Next Quote
-            </button>
-            <button class="hud-btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="openSuggestQuoteModal()" title="Suggest a Quote">
-                <i class="fas fa-plus"></i> Add Quote
-            </button>
+<div id="dashboard-sections-container" style="display: flex; flex-direction: column; gap: 20px;">
+
+    <!-- Section 1: Daily Motivational Hero Banner -->
+    <div class="dash-section" id="sec-quote" data-section-id="sec-quote">
+        <div class="quote-banner" id="quote-hero-card">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 4px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-quote-left" style="color: var(--stark-gold); font-size: 1.2rem;"></i>
+                    <span class="quote-author-tag" id="quote-category-tag">DAILY WARRIOR MOTIVATION</span>
+                </div>
+                <div style="display: flex; gap: 6px;">
+                    <button class="hud-btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="loadNewQuote()" title="Cycle Next Quote">
+                        <i class="fas fa-sync-alt"></i> Next Quote
+                    </button>
+                    <button class="hud-btn" style="padding: 4px 8px; font-size: 0.75rem;" onclick="openSuggestQuoteModal()" title="Suggest a Quote">
+                        <i class="fas fa-plus"></i> Add Quote
+                    </button>
+                </div>
+            </div>
+
+            <p class="quote-text" id="quote-text-display">"Self-belief and hard work will always earn you success. Whatever you want to do, do with full passion."</p>
+            <div style="text-align: right; font-size: 0.88rem; color: var(--stark-gold); font-weight: 600;" id="quote-author-display">— Virat Kohli</div>
+
+            <!-- Interactive Feedback Bar -->
+            <div class="quote-feedback-bar">
+                <span style="font-size: 0.8rem; color: var(--text-muted);"><i class="fas fa-comment-dots"></i> How does this quote motivate you today?</span>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <button class="hud-btn" style="padding: 3px 8px; font-size: 0.78rem;" onclick="rateQuote(5, 'Super Inspiring 🔥')">🔥 Fired Up</button>
+                    <button class="hud-btn" style="padding: 3px 8px; font-size: 0.78rem;" onclick="rateQuote(4, 'Good Focus')">👍 Focused</button>
+                    <button class="hud-btn" style="padding: 3px 8px; font-size: 0.78rem;" onclick="openQuoteFeedbackModal()">✍ Give Feedback</button>
+                </div>
+            </div>
         </div>
     </div>
 
-    <p class="quote-text" id="quote-text-display">"Self-belief and hard work will always earn you success. Whatever you want to do, do with full passion."</p>
-    <div style="text-align: right; font-size: 0.88rem; color: var(--stark-gold); font-weight: 600;" id="quote-author-display">— Virat Kohli</div>
-
-    <!-- Interactive Feedback Bar -->
-    <div class="quote-feedback-bar">
-        <span style="font-size: 0.8rem; color: var(--text-muted);"><i class="fas fa-comment-dots"></i> How does this quote motivate you today?</span>
-        <div style="display: flex; gap: 8px; align-items: center;">
-            <button class="hud-btn" style="padding: 3px 8px; font-size: 0.78rem;" onclick="rateQuote(5, 'Super Inspiring 🔥')">🔥 Fired Up</button>
-            <button class="hud-btn" style="padding: 3px 8px; font-size: 0.78rem;" onclick="rateQuote(4, 'Good Focus')">👍 Focused</button>
-            <button class="hud-btn" style="padding: 3px 8px; font-size: 0.78rem;" onclick="openQuoteFeedbackModal()">✍ Give Feedback</button>
+    <!-- Section 2: Urgent Deadline Alert Banner -->
+    <div class="dash-section" id="sec-urgent" data-section-id="sec-urgent">
+        <div id="urgent-deadline-alert" class="proximity-banner" style="display: none;">
+            <div class="banner-left">
+                <div class="banner-icon"><i class="fas fa-radiation"></i></div>
+                <div class="banner-text">
+                    <h4>CRITICAL MISSION DEADLINE WARNING</h4>
+                    <p id="urgent-alert-text">You have missions due within 24 hours.</p>
+                </div>
+            </div>
+            <a href="/tasks" class="hud-btn hud-btn-danger">
+                <i class="fas fa-crosshairs"></i> View Urgent
+            </a>
         </div>
     </div>
+
+    <!-- Section 3: Key Stat Counters -->
+    <div class="dash-section" id="sec-stats" data-section-id="sec-stats">
+        <div class="stat-grid" style="margin-bottom: 0;">
+            <div class="stark-card stat-tile">
+                <div class="stat-icon icon-gold">
+                    <i class="fas fa-fire"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 id="stat-study-streak">0 Days</h3>
+                    <p>Discipline Streak</p>
+                </div>
+            </div>
+
+            <div class="stark-card stat-tile">
+                <div class="stat-icon icon-cyan">
+                    <i class="fas fa-tasks"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 id="stat-pending-tasks">0</h3>
+                    <p>Tasks Due</p>
+                </div>
+            </div>
+
+            <div class="stark-card stat-tile">
+                <div class="stat-icon icon-purple">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 id="stat-today-events">0</h3>
+                    <p>Today's Schedule</p>
+                </div>
+            </div>
+
+            <div class="stark-card stat-tile">
+                <div class="stat-icon icon-red">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-info">
+                    <h3 id="stat-completed-tasks">0</h3>
+                    <p>Completed Missions</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 4: Daily Hanuman Chalisa Quick Check Deck -->
+    <div class="dash-section" id="sec-habits" data-section-id="sec-habits">
+        <div class="stark-card" style="border-left: 4px solid var(--stark-gold); background: linear-gradient(135deg, rgba(255,183,3,0.06), rgba(13,20,36,0.85));">
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(255,183,3,0.15); border: 1px solid var(--stark-gold); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; color: var(--stark-gold);">
+                        <i class="fas fa-om"></i>
+                    </div>
+                    <div>
+                        <h4 style="font-family: var(--font-heading); color: #fff; font-size: 1.05rem; margin-bottom: 2px;">DAILY HANUMAN CHALISA & ROUTINE</h4>
+                        <p style="font-size: 0.82rem; color: var(--text-muted);">Protect your spiritual focus & daily discipline streak</p>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 8px;">
+                    <button class="hud-btn" style="background: rgba(255,183,3,0.18); border-color: var(--stark-gold); color: var(--stark-gold);" onclick="openChalisaModal()">
+                        <i class="fas fa-book-open"></i> Read Chalisa
+                    </button>
+                    <a href="/habits" class="hud-btn">
+                        <i class="fas fa-fire"></i> Habit Tracker
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 5: Two-Column Layout (Schedule & Priority Tasks) -->
+    <div class="dash-section" id="sec-grid-events-tasks" data-section-id="sec-grid-events-tasks">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <!-- Column 1: Today's Schedule & Classes -->
+            <div class="stark-card">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; border-bottom: 1px solid rgba(0,242,254,0.15); padding-bottom: 10px;">
+                    <h3 style="font-family: var(--font-heading); font-size: 1.05rem; color: var(--arc-cyan);">
+                        <i class="fas fa-calendar-day"></i> TODAY'S SCHEDULE & EVENTS
+                    </h3>
+                    <a href="/events" class="hud-btn" style="padding: 4px 8px; font-size: 0.8rem;">Schedule View</a>
+                </div>
+
+                <div id="today-events-list">
+                    <p style="color: var(--text-muted); font-size: 0.85rem;">Scanning today's agenda...</p>
+                </div>
+            </div>
+
+            <!-- Column 2: Today's Study & Assignments -->
+            <div class="stark-card">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; border-bottom: 1px solid rgba(0,242,254,0.15); padding-bottom: 10px;">
+                    <h3 style="font-family: var(--font-heading); font-size: 1.05rem; color: var(--stark-red);">
+                        <i class="fas fa-bolt"></i> PRIORITY STUDY DIRECTIVES
+                    </h3>
+                    <a href="/tasks" class="hud-btn" style="padding: 4px 8px; font-size: 0.8rem;">Task HQ</a>
+                </div>
+
+                <div id="today-urgent-tasks-list">
+                    <p style="color: var(--text-muted); font-size: 0.85rem;">Scanning tasks...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 
-<!-- Urgent Deadline Alert Banner -->
-<div id="urgent-deadline-alert" class="proximity-banner" style="display: none;">
-    <div class="banner-left">
-        <div class="banner-icon"><i class="fas fa-radiation"></i></div>
-        <div class="banner-text">
-            <h4>CRITICAL MISSION DEADLINE WARNING</h4>
-            <p id="urgent-alert-text">You have missions due within 24 hours.</p>
+<!-- Modal: Dashboard Sections Reorder / Priority Shuffle -->
+<div class="modal-overlay" id="section-reorder-modal">
+    <div class="modal-card" style="max-width: 500px;">
+        <div class="modal-header">
+            <h3><i class="fas fa-sort"></i> SHUFFLE & REORDER SECTIONS</h3>
+            <button class="modal-close" onclick="closeSectionReorderModal()"><i class="fas fa-times"></i></button>
         </div>
-    </div>
-    <a href="/tasks" class="hud-btn hud-btn-danger">
-        <i class="fas fa-crosshairs"></i> View Urgent
-    </a>
-</div>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
+            Arrange sections based on your personal priority. Top sections appear first on your Command HUD.
+        </p>
 
-<!-- Key Stat Counters -->
-<div class="stat-grid">
-    <div class="stark-card stat-tile">
-        <div class="stat-icon icon-gold">
-            <i class="fas fa-fire"></i>
-        </div>
-        <div class="stat-info">
-            <h3 id="stat-study-streak">0 Days</h3>
-            <p>Discipline Streak</p>
-        </div>
-    </div>
-
-    <div class="stark-card stat-tile">
-        <div class="stat-icon icon-cyan">
-            <i class="fas fa-tasks"></i>
-        </div>
-        <div class="stat-info">
-            <h3 id="stat-pending-tasks">0</h3>
-            <p>Tasks Due</p>
-        </div>
-    </div>
-
-    <div class="stark-card stat-tile">
-        <div class="stat-icon icon-purple">
-            <i class="fas fa-calendar-check"></i>
-        </div>
-        <div class="stat-info">
-            <h3 id="stat-today-events">0</h3>
-            <p>Today's Schedule</p>
-        </div>
-    </div>
-
-    <div class="stark-card stat-tile">
-        <div class="stat-icon icon-red">
-            <i class="fas fa-check-circle"></i>
-        </div>
-        <div class="stat-info">
-            <h3 id="stat-completed-tasks">0</h3>
-            <p>Completed Missions</p>
-        </div>
-    </div>
-</div>
-
-<!-- Two-Column Layout: Left = Today's Schedule & Events, Right = Today's Study Tasks -->
-<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-    <!-- Column 1: Today's Schedule & Classes -->
-    <div class="stark-card">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; border-bottom: 1px solid rgba(0,242,254,0.15); padding-bottom: 10px;">
-            <h3 style="font-family: var(--font-heading); font-size: 1.05rem; color: var(--arc-cyan);">
-                <i class="fas fa-calendar-day"></i> TODAY'S SCHEDULE & EVENTS
-            </h3>
-            <a href="/events" class="hud-btn" style="padding: 4px 8px; font-size: 0.8rem;">Schedule View</a>
+        <div id="reorder-items-list" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px;">
+            <!-- Rendered dynamically -->
         </div>
 
-        <div id="today-events-list">
-            <p style="color: var(--text-muted); font-size: 0.85rem;">Scanning today's agenda...</p>
-        </div>
-    </div>
-
-    <!-- Column 2: Today's Study & Assignments -->
-    <div class="stark-card">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; border-bottom: 1px solid rgba(0,242,254,0.15); padding-bottom: 10px;">
-            <h3 style="font-family: var(--font-heading); font-size: 1.05rem; color: var(--stark-red);">
-                <i class="fas fa-bolt"></i> PRIORITY STUDY DIRECTIVES
-            </h3>
-            <a href="/tasks" class="hud-btn" style="padding: 4px 8px; font-size: 0.8rem;">Task HQ</a>
-        </div>
-
-        <div id="today-urgent-tasks-list">
-            <p style="color: var(--text-muted); font-size: 0.85rem;">Scanning tasks...</p>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <button class="hud-btn" onclick="resetSectionOrder()">Reset Default</button>
+            <div style="display: flex; gap: 10px;">
+                <button class="hud-btn" onclick="closeSectionReorderModal()">Cancel</button>
+                <button class="hud-btn hud-btn-primary" onclick="saveDashboardSectionOrder()">Save Order</button>
+            </div>
         </div>
     </div>
 </div>
@@ -338,7 +404,112 @@ async function handleCustomQuote(e) {
     }
 }
 
+// ================= DASHBOARD SECTIONS REORDERING ENGINE =================
+
+const defaultSectionOrder = [
+    { id: 'sec-quote', name: 'Daily Warrior Motivation', icon: 'fas fa-quote-left' },
+    { id: 'sec-urgent', name: 'Critical Deadline Warning', icon: 'fas fa-radiation' },
+    { id: 'sec-habits', name: 'Daily Hanuman Chalisa & Routine', icon: 'fas fa-om' },
+    { id: 'sec-stats', name: 'Key Metric Counters', icon: 'fas fa-chart-pie' },
+    { id: 'sec-grid-events-tasks', name: 'Today Schedule & Priority Directives', icon: 'fas fa-tasks' }
+];
+
+let currentSectionOrder = [];
+
+function loadSectionOrder() {
+    const saved = localStorage.getItem('stark_dashboard_sections_order');
+    if (saved) {
+        try {
+            const savedIds = JSON.parse(saved);
+            currentSectionOrder = [];
+            savedIds.forEach(id => {
+                const item = defaultSectionOrder.find(d => d.id === id);
+                if (item) currentSectionOrder.push(item);
+            });
+            defaultSectionOrder.forEach(item => {
+                if (!currentSectionOrder.some(c => c.id === item.id)) currentSectionOrder.push(item);
+            });
+        } catch(e) {
+            currentSectionOrder = [...defaultSectionOrder];
+        }
+    } else {
+        currentSectionOrder = [...defaultSectionOrder];
+    }
+    applySectionOrderDOM();
+}
+
+function applySectionOrderDOM() {
+    const container = document.getElementById('dashboard-sections-container');
+    if (!container) return;
+    currentSectionOrder.forEach(item => {
+        const el = document.getElementById(item.id);
+        if (el) container.appendChild(el);
+    });
+}
+
+function openSectionReorderModal() {
+    const m = document.getElementById('section-reorder-modal');
+    if (m) {
+        m.classList.add('active');
+        renderReorderList();
+        jarvisAudio.playClick();
+    }
+}
+
+function closeSectionReorderModal() {
+    const m = document.getElementById('section-reorder-modal');
+    if (m) m.classList.remove('active');
+}
+
+function renderReorderList() {
+    const list = document.getElementById('reorder-items-list');
+    if (!list) return;
+
+    list.innerHTML = currentSectionOrder.map((sec, idx) => `
+        <div style="background: rgba(5,9,20,0.8); border: 1px solid rgba(0,242,254,0.25); border-radius: 10px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-weight: 700; color: var(--arc-cyan); font-size: 0.9rem;">#${idx + 1}</span>
+                <i class="${sec.icon}" style="color: var(--stark-gold); font-size: 1rem; width: 18px;"></i>
+                <span style="color: #fff; font-size: 0.9rem; font-weight: 600;">${sec.name}</span>
+            </div>
+            <div style="display: flex; gap: 4px;">
+                <button class="hud-btn" style="padding: 4px 8px; font-size: 0.8rem;" ${idx === 0 ? 'disabled' : ''} onclick="moveSectionItem(${idx}, -1)">
+                    <i class="fas fa-arrow-up"></i>
+                </button>
+                <button class="hud-btn" style="padding: 4px 8px; font-size: 0.8rem;" ${idx === currentSectionOrder.length - 1 ? 'disabled' : ''} onclick="moveSectionItem(${idx}, 1)">
+                    <i class="fas fa-arrow-down"></i>
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function moveSectionItem(index, direction) {
+    const newIdx = index + direction;
+    if (newIdx < 0 || newIdx >= currentSectionOrder.length) return;
+    const temp = currentSectionOrder[index];
+    currentSectionOrder[index] = currentSectionOrder[newIdx];
+    currentSectionOrder[newIdx] = temp;
+    renderReorderList();
+    jarvisAudio.playClick();
+}
+
+function saveDashboardSectionOrder() {
+    const orderIds = currentSectionOrder.map(s => s.id);
+    localStorage.setItem('stark_dashboard_sections_order', JSON.stringify(orderIds));
+    applySectionOrderDOM();
+    closeSectionReorderModal();
+    jarvisAudio.playSuccess();
+    showToast('Layout Updated', 'Dashboard priority order saved successfully.', 'success');
+}
+
+function resetSectionOrder() {
+    currentSectionOrder = [...defaultSectionOrder];
+    saveDashboardSectionOrder();
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+    loadSectionOrder();
     loadDashboardHUD();
     const suggestForm = document.getElementById('suggest-quote-form');
     if (suggestForm) suggestForm.addEventListener('submit', handleCustomQuote);

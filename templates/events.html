@@ -124,13 +124,31 @@
 let allEvents = [];
 let activeEventType = 'all';
 
+function saveEventsToLocalStorage(events) {
+    try {
+        localStorage.setItem('stark_events_cache', JSON.stringify(events));
+    } catch(e) {}
+}
+
+function loadEventsFromLocalStorage() {
+    try {
+        const cached = localStorage.getItem('stark_events_cache');
+        if (cached) {
+            allEvents = JSON.parse(cached);
+            renderEvents();
+        }
+    } catch(e) {}
+}
+
 async function fetchEvents() {
     try {
         const res = await fetch('/api/events');
         allEvents = await res.json();
+        saveEventsToLocalStorage(allEvents);
         renderEvents();
     } catch (e) {
-        showToast('Error', 'Unable to fetch events', 'danger');
+        loadEventsFromLocalStorage();
+        showToast('Offline Mode', 'Displaying cached schedule events.', 'info');
     }
 }
 

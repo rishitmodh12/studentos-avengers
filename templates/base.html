@@ -112,7 +112,15 @@
                     <p>{% block page_subtitle %}Mission tasks, events, and academic hub{% endblock %}</p>
                 </div>
 
-                <div class="top-actions">
+                    <!-- Profile & Avatar Pill -->
+                    <div class="hud-btn" id="user-profile-pill" onclick="openProfileModal()" style="cursor: pointer; padding: 5px 12px 5px 6px; gap: 8px;" title="Profile & Avatar Settings">
+                        <div id="header-avatar-badge" style="width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--arc-cyan), var(--cap-blue)); display: flex; align-items: center; justify-content: center; font-weight: 700; color: #030814; font-size: 0.95rem; border: 1.5px solid var(--arc-cyan); overflow: hidden;">
+                            <span id="header-avatar-initial">R</span>
+                        </div>
+                        <span id="header-user-name" style="font-weight: 600; color: #fff; font-size: 0.9rem;" class="desktop-only">Commander</span>
+                        <i class="fas fa-cog" style="font-size: 0.75rem; color: var(--arc-cyan);"></i>
+                    </div>
+
                     <!-- Audio SFX Toggle Button -->
                     <button class="hud-btn" id="sound-toggle-btn" title="Toggle UI Audio">
                         <i class="fas fa-volume-up"></i>
@@ -121,7 +129,7 @@
                     <!-- Google Tasks / Account Button -->
                     <button class="hud-btn" id="google-auth-btn" onclick="openGoogleTasksModal()" title="Google Account & Tasks Sync">
                         <i class="fab fa-google" style="color: #4285F4;"></i>
-                        <span id="google-auth-btn-text" class="desktop-only">Sign in with Google</span>
+                        <span id="google-auth-btn-text" class="desktop-only">Google Sync</span>
                     </button>
 
                     <!-- Urgent Deadline Bell Badge -->
@@ -239,6 +247,78 @@
         </div>
     </div>
 
+    <!-- Modal: Profile & Avatar Customizer -->
+    <div class="modal-overlay" id="profile-modal">
+        <div class="modal-card" style="max-width: 520px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-user-astronaut"></i> PROFILE & AVATAR SETTINGS</h3>
+                <button class="modal-close" onclick="closeProfileModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="profile-customizer-form" onsubmit="saveUserProfile(event)">
+                <div class="form-group">
+                    <label>Your Display Name</label>
+                    <input type="text" id="profile-name-input" class="form-control" placeholder="e.g. Rishit Modh / Tony Stark" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Select Hero Avatar</label>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 8px;" id="avatar-grid-picker">
+                        <!-- Iron Man -->
+                        <div class="avatar-option active" data-avatar="ironman" data-icon="fas fa-atom" data-color="#ff2a4d" onclick="selectAvatarOption(this)" style="cursor: pointer; text-align: center; padding: 10px 4px; background: rgba(255,42,77,0.15); border: 2px solid var(--stark-red); border-radius: 12px; transition: all 0.2s;">
+                            <i class="fas fa-atom" style="font-size: 1.6rem; color: var(--stark-red);"></i>
+                            <span style="display: block; font-size: 0.72rem; color: #fff; margin-top: 4px; font-weight: 600;">Iron Man</span>
+                        </div>
+                        <!-- Captain America -->
+                        <div class="avatar-option" data-avatar="cap" data-icon="fas fa-shield-alt" data-color="#0088ff" onclick="selectAvatarOption(this)" style="cursor: pointer; text-align: center; padding: 10px 4px; background: rgba(0,136,255,0.15); border: 2px solid rgba(0,136,255,0.3); border-radius: 12px; transition: all 0.2s;">
+                            <i class="fas fa-shield-alt" style="font-size: 1.6rem; color: var(--cap-blue);"></i>
+                            <span style="display: block; font-size: 0.72rem; color: #fff; margin-top: 4px; font-weight: 600;">Captain</span>
+                        </div>
+                        <!-- Spider-Man -->
+                        <div class="avatar-option" data-avatar="spiderman" data-icon="fas fa-spider" data-color="#ff0055" onclick="selectAvatarOption(this)" style="cursor: pointer; text-align: center; padding: 10px 4px; background: rgba(255,0,85,0.15); border: 2px solid rgba(255,0,85,0.3); border-radius: 12px; transition: all 0.2s;">
+                            <i class="fas fa-spider" style="font-size: 1.6rem; color: #ff0055;"></i>
+                            <span style="display: block; font-size: 0.72rem; color: #fff; margin-top: 4px; font-weight: 600;">Spidey</span>
+                        </div>
+                        <!-- Thor -->
+                        <div class="avatar-option" data-avatar="thor" data-icon="fas fa-bolt" data-color="#ffb703" onclick="selectAvatarOption(this)" style="cursor: pointer; text-align: center; padding: 10px 4px; background: rgba(255,183,3,0.15); border: 2px solid rgba(255,183,3,0.3); border-radius: 12px; transition: all 0.2s;">
+                            <i class="fas fa-bolt" style="font-size: 1.6rem; color: var(--stark-gold);"></i>
+                            <span style="display: block; font-size: 0.72rem; color: #fff; margin-top: 4px; font-weight: 600;">Thor</span>
+                        </div>
+                        <!-- Black Panther -->
+                        <div class="avatar-option" data-avatar="panther" data-icon="fas fa-paw" data-color="#9d4edd" onclick="selectAvatarOption(this)" style="cursor: pointer; text-align: center; padding: 10px 4px; background: rgba(157,78,221,0.15); border: 2px solid rgba(157,78,221,0.3); border-radius: 12px; transition: all 0.2s;">
+                            <i class="fas fa-paw" style="font-size: 1.6rem; color: var(--vibranium-purple);"></i>
+                            <span style="display: block; font-size: 0.72rem; color: #fff; margin-top: 4px; font-weight: 600;">Panther</span>
+                        </div>
+                        <!-- Hulk -->
+                        <div class="avatar-option" data-avatar="hulk" data-icon="fas fa-fist-raised" data-color="#00e676" onclick="selectAvatarOption(this)" style="cursor: pointer; text-align: center; padding: 10px 4px; background: rgba(0,230,118,0.15); border: 2px solid rgba(0,230,118,0.3); border-radius: 12px; transition: all 0.2s;">
+                            <i class="fas fa-fist-raised" style="font-size: 1.6rem; color: var(--hulk-green);"></i>
+                            <span style="display: block; font-size: 0.72rem; color: #fff; margin-top: 4px; font-weight: 600;">Hulk</span>
+                        </div>
+                        <!-- Dr. Strange -->
+                        <div class="avatar-option" data-avatar="strange" data-icon="fas fa-eye" data-color="#00f2fe" onclick="selectAvatarOption(this)" style="cursor: pointer; text-align: center; padding: 10px 4px; background: rgba(0,242,254,0.15); border: 2px solid rgba(0,242,254,0.3); border-radius: 12px; transition: all 0.2s;">
+                            <i class="fas fa-eye" style="font-size: 1.6rem; color: var(--arc-cyan);"></i>
+                            <span style="display: block; font-size: 0.72rem; color: #fff; margin-top: 4px; font-weight: 600;">Strange</span>
+                        </div>
+                        <!-- Custom Crown -->
+                        <div class="avatar-option" data-avatar="crown" data-icon="fas fa-crown" data-color="#ffd166" onclick="selectAvatarOption(this)" style="cursor: pointer; text-align: center; padding: 10px 4px; background: rgba(255,209,102,0.15); border: 2px solid rgba(255,209,102,0.3); border-radius: 12px; transition: all 0.2s;">
+                            <i class="fas fa-crown" style="font-size: 1.6rem; color: #ffd166;"></i>
+                            <span style="display: block; font-size: 0.72rem; color: #fff; margin-top: 4px; font-weight: 600;">Leader</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Or Enter Custom Image URL (Optional)</label>
+                    <input type="url" id="profile-img-url-input" class="form-control" placeholder="https://example.com/my-photo.jpg">
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                    <button type="button" class="hud-btn" onclick="closeProfileModal()">Cancel</button>
+                    <button type="submit" class="hud-btn hud-btn-primary"><i class="fas fa-save"></i> Save Profile</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Modal: Google Account & Tasks Sync -->
     <div class="modal-overlay" id="google-tasks-modal">
         <div class="modal-card" style="max-width: 520px;">
@@ -250,38 +330,36 @@
             <!-- State 1: Not Connected -->
             <div id="google-logged-out-state">
                 <div style="text-align: center; padding: 15px 10px 20px;">
-                    <div style="width: 60px; height: 60px; background: rgba(66, 133, 244, 0.12); border: 1px solid rgba(66, 133, 244, 0.4); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; color: #4285F4; margin: 0 auto 16px;">
+                    <div style="width: 56px; height: 56px; background: rgba(66, 133, 244, 0.12); border: 1px solid rgba(66, 133, 244, 0.4); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; color: #4285F4; margin: 0 auto 14px;">
                         <i class="fab fa-google"></i>
                     </div>
-                    <h4 style="font-family: var(--font-heading); color: #fff; font-size: 1.1rem; margin-bottom: 6px;">Sign in to Sync Google Tasks</h4>
-                    <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 20px;">
-                        Log in with your Google Account to automatically pull and sync all your Google Tasks directly into your StudentOS dashboard.
+                    <h4 style="font-family: var(--font-heading); color: #fff; font-size: 1.05rem; margin-bottom: 6px;">Sign in with any Google ID</h4>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 18px;">
+                        Connect any Google Account to automatically sync and manage your Google Tasks.
                     </p>
 
-                    <button class="hud-btn" style="background: #ffffff; color: #1f2937; font-weight: 700; width: 100%; justify-content: center; padding: 12px; font-size: 1rem; border-radius: 12px; box-shadow: 0 4px 15px rgba(255,255,255,0.2);" onclick="initiateGoogleLogin()">
-                        <i class="fab fa-google" style="color: #4285F4; font-size: 1.2rem;"></i> Sign in with Google
+                    <button class="hud-btn" style="background: #ffffff; color: #1f2937; font-weight: 700; width: 100%; justify-content: center; padding: 12px; font-size: 0.95rem; border-radius: 12px; box-shadow: 0 4px 15px rgba(255,255,255,0.2);" onclick="initiateGoogleLogin()">
+                        <i class="fab fa-google" style="color: #4285F4; font-size: 1.1rem;"></i> Choose & Sign In with Google ID
                     </button>
                 </div>
 
                 <div style="border-top: 1px solid rgba(0, 242, 254, 0.15); padding-top: 14px; margin-top: 10px;">
-                    <details style="font-size: 0.82rem; color: var(--text-muted);">
-                        <summary style="cursor: pointer; color: var(--arc-cyan);"><i class="fas fa-cog"></i> Advanced: Custom Google OAuth Client ID</summary>
-                        <div style="margin-top: 10px;">
-                            <label style="display: block; margin-bottom: 4px; color: #cbd5e1;">Google Cloud Client ID (Optional):</label>
-                            <input type="text" id="custom-client-id-input" class="form-control" style="font-size: 0.8rem;" placeholder="e.g. 123456789-abc.apps.googleusercontent.com">
-                            <button class="hud-btn" style="margin-top: 8px; font-size: 0.78rem; padding: 4px 10px;" onclick="saveCustomClientId()">Save Client ID</button>
-                        </div>
-                    </details>
+                    <label style="display: block; font-size: 0.82rem; color: var(--arc-cyan); margin-bottom: 6px;">Or Connect Any Custom Gmail / ID Directly:</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="email" id="custom-google-email-input" class="form-control" style="font-size: 0.85rem; padding: 8px 12px;" placeholder="your.name@gmail.com">
+                        <button class="hud-btn hud-btn-primary" style="padding: 8px 14px; font-size: 0.85rem;" onclick="connectCustomGoogleEmail()">Connect</button>
+                    </div>
                 </div>
             </div>
 
             <!-- State 2: Connected -->
             <div id="google-logged-in-state" style="display: none;">
-                <div style="background: rgba(5, 9, 20, 0.8); border: 1px solid rgba(0, 242, 254, 0.25); border-radius: 12px; padding: 18px; margin-bottom: 18px; display: flex; align-items: center; gap: 14px;">
-                    <img id="google-user-avatar" src="" alt="Google User" style="width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--arc-cyan); display: none;">
-                    <div id="google-user-avatar-placeholder" style="width: 48px; height: 48px; border-radius: 50%; background: #4285F4; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.2rem;">G</div>
+                <div style="background: rgba(5, 9, 20, 0.8); border: 1px solid rgba(0, 242, 254, 0.25); border-radius: 12px; padding: 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 14px;">
+                    <div id="google-user-avatar-badge" style="width: 44px; height: 44px; border-radius: 50%; background: #4285F4; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.2rem; flex-shrink: 0; overflow: hidden; border: 2px solid var(--arc-cyan);">
+                        <span id="google-user-avatar-text">G</span>
+                    </div>
                     <div>
-                        <h4 id="google-user-name" style="color: #fff; font-size: 1rem; margin-bottom: 2px;">Google Connected</h4>
+                        <h4 id="google-user-name" style="color: #fff; font-size: 0.98rem; margin-bottom: 2px;">Google Connected</h4>
                         <p id="google-user-email" style="font-size: 0.8rem; color: var(--text-muted);">Tasks synchronized with cloud</p>
                     </div>
                 </div>
@@ -291,7 +369,7 @@
                         <i class="fas fa-sync-alt" id="sync-spinner-icon"></i> Sync Tasks Now
                     </button>
                     <button class="hud-btn hud-btn-danger" style="padding: 10px 14px;" onclick="disconnectGoogleAccount()">
-                        <i class="fas fa-sign-out-alt"></i> Disconnect
+                        <i class="fas fa-sign-out-alt"></i> Switch / Logout
                     </button>
                 </div>
 
