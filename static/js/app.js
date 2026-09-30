@@ -351,12 +351,42 @@ function initGoogleAuth() {
     }
 }
 
+// Mobile Navigation Drawer Controls
+function openMobileDrawer() {
+    const drawer = document.getElementById('mobile-drawer');
+    const overlay = document.getElementById('mobile-drawer-overlay');
+    if (drawer) drawer.classList.add('active');
+    if (overlay) overlay.classList.add('active');
+    jarvisAudio.playClick();
+}
+
+function closeMobileDrawer() {
+    const drawer = document.getElementById('mobile-drawer');
+    const overlay = document.getElementById('mobile-drawer-overlay');
+    if (drawer) drawer.classList.remove('active');
+    if (overlay) overlay.classList.remove('active');
+}
+
+function toggleMobileDrawer() {
+    const drawer = document.getElementById('mobile-drawer');
+    if (drawer && drawer.classList.contains('active')) {
+        closeMobileDrawer();
+    } else {
+        openMobileDrawer();
+    }
+}
+
 function updateGoogleUIState(isLoggedIn, user = null) {
     const loggedOutDiv = document.getElementById('google-logged-out-state');
     const loggedInDiv = document.getElementById('google-logged-in-state');
     const sideGoogleBtn = document.getElementById('sidebar-google-btn');
     const taskStatusPill = document.getElementById('side-google-status-pill');
     const taskEmailText = document.getElementById('side-user-email-text');
+
+    // Mobile Drawer elements
+    const drawerUserName = document.getElementById('drawer-user-name');
+    const drawerUserEmail = document.getElementById('drawer-user-email');
+    const drawerAvatar = document.getElementById('drawer-google-avatar');
 
     if (isLoggedIn && user) {
         if (loggedOutDiv) loggedOutDiv.style.display = 'none';
@@ -369,6 +399,10 @@ function updateGoogleUIState(isLoggedIn, user = null) {
         if (nameEl) nameEl.textContent = user.name || 'Google User';
         if (emailEl) emailEl.textContent = user.email || 'Cloud workspace active';
         if (avatarText) avatarText.textContent = user.name ? user.name[0].toUpperCase() : 'G';
+
+        if (drawerUserName) drawerUserName.textContent = user.name || 'Google User';
+        if (drawerUserEmail) drawerUserEmail.textContent = user.email || 'Account Active';
+        if (drawerAvatar) drawerAvatar.innerHTML = `<span style="font-weight: 700; color: #fff;">${(user.name || user.email)[0].toUpperCase()}</span>`;
 
         if (sideGoogleBtn) {
             sideGoogleBtn.title = `Logged in: ${user.email}`;
@@ -390,6 +424,10 @@ function updateGoogleUIState(isLoggedIn, user = null) {
     } else {
         if (loggedOutDiv) loggedOutDiv.style.display = 'block';
         if (loggedInDiv) loggedInDiv.style.display = 'none';
+
+        if (drawerUserName) drawerUserName.textContent = 'Guest Commander';
+        if (drawerUserEmail) drawerUserEmail.textContent = 'Tap to Sign In / Sync Data';
+        if (drawerAvatar) drawerAvatar.innerHTML = `<i class="fab fa-google"></i>`;
 
         if (sideGoogleBtn) {
             sideGoogleBtn.title = "Sign in with Google to save data";

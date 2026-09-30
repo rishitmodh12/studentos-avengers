@@ -114,29 +114,36 @@
         <main class="main-content">
             <!-- Top Header Bar -->
             <header class="top-header">
-                <div class="page-headline">
-                    <h1>{% block page_title %}COMMAND HUD{% endblock %}</h1>
-                    <p>{% block page_subtitle %}Personal student control deck{% endblock %}</p>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <!-- Mobile Hamburger Menu Button -->
+                    <button class="mobile-menu-toggle" id="mobile-menu-btn" onclick="toggleMobileDrawer()" title="Open Navigation Menu">
+                        <i class="fas fa-bars"></i>
+                    </button>
+
+                    <div class="page-headline">
+                        <h1>{% block page_title %}COMMAND HUD{% endblock %}</h1>
+                        <p>{% block page_subtitle %}Personal student control deck{% endblock %}</p>
+                    </div>
                 </div>
 
                 <div class="top-actions">
                     <!-- Profile & Avatar Pill -->
-                    <div class="hud-btn" id="user-profile-pill" onclick="openProfileModal()" style="cursor: pointer; padding: 5px 12px 5px 6px; gap: 8px;" title="Profile & Avatar Settings">
-                        <div id="header-avatar-badge" style="width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--arc-cyan), var(--cap-blue)); display: flex; align-items: center; justify-content: center; font-weight: 700; color: #030814; font-size: 0.95rem; border: 1.5px solid var(--arc-cyan); overflow: hidden;">
+                    <div class="hud-btn" id="user-profile-pill" onclick="openProfileModal()" style="cursor: pointer; padding: 5px 10px 5px 6px; gap: 6px;" title="Profile & Avatar Settings">
+                        <div id="header-avatar-badge" style="width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, var(--arc-cyan), var(--cap-blue)); display: flex; align-items: center; justify-content: center; font-weight: 700; color: #030814; font-size: 0.85rem; border: 1.5px solid var(--arc-cyan); overflow: hidden;">
                             <span id="header-avatar-initial">R</span>
                         </div>
-                        <span id="header-user-name" style="font-weight: 600; color: #fff; font-size: 0.9rem;" class="desktop-only">Commander</span>
-                        <i class="fas fa-cog" style="font-size: 0.75rem; color: var(--arc-cyan);"></i>
+                        <span id="header-user-name" style="font-weight: 600; color: #fff; font-size: 0.85rem;" class="desktop-only">Commander</span>
+                        <i class="fas fa-cog" style="font-size: 0.7rem; color: var(--arc-cyan);"></i>
                     </div>
 
                     <!-- Audio SFX Toggle Button -->
-                    <button class="hud-btn" id="sound-toggle-btn" title="Toggle UI Audio">
+                    <button class="hud-btn" id="sound-toggle-btn" title="Toggle UI Audio" style="padding: 7px 10px;">
                         <i class="fas fa-volume-up"></i>
                     </button>
 
                     <!-- Urgent Deadline Bell Badge -->
                     <div class="bell-wrapper" id="bell-btn" title="Urgent Deadline Alerts">
-                        <button class="hud-btn" style="padding: 8px 12px;">
+                        <button class="hud-btn" style="padding: 7px 10px;">
                             <i class="fas fa-bell"></i>
                         </button>
                         <span class="bell-badge" id="bell-count" style="display: none;">0</span>
@@ -152,6 +159,55 @@
             </div>
         </main>
     </div>
+
+    <!-- Mobile Drawer Overlay & Sliding HUD Panel -->
+    <div class="mobile-drawer-overlay" id="mobile-drawer-overlay" onclick="closeMobileDrawer()"></div>
+    <aside class="mobile-drawer" id="mobile-drawer">
+        <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(0, 242, 254, 0.15); padding-bottom: 14px; margin-bottom: 14px;">
+            <a href="/" class="brand-logo" style="margin-bottom: 0; padding-bottom: 0; border-bottom: none;">
+                <div class="brand-icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div>
+                    <div class="brand-title">STARK <span>OS</span></div>
+                    <div class="brand-sub">STUDENT HUB</div>
+                </div>
+            </a>
+            <button class="modal-close" onclick="closeMobileDrawer()" style="font-size: 1.2rem;"><i class="fas fa-times"></i></button>
+        </div>
+
+        <!-- Google User Account Quick Card in Drawer -->
+        <div class="drawer-user-card" onclick="openGoogleTasksModal(); closeMobileDrawer();">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div id="drawer-google-avatar" style="width: 36px; height: 36px; border-radius: 50%; background: #4285F4; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 0.95rem; flex-shrink: 0; border: 1.5px solid var(--arc-cyan);">
+                    <i class="fab fa-google"></i>
+                </div>
+                <div style="overflow: hidden;">
+                    <h5 id="drawer-user-name" style="color: #fff; font-size: 0.88rem; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; margin-bottom: 1px;">Google Account</h5>
+                    <p id="drawer-user-email" style="color: var(--arc-cyan); font-size: 0.72rem; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">Tap to Sign In / Sync Data</p>
+                </div>
+            </div>
+            <i class="fas fa-chevron-right" style="color: var(--text-muted); font-size: 0.75rem;"></i>
+        </div>
+
+        <ul class="nav-menu" style="margin-top: 14px; max-height: calc(100vh - 290px); overflow-y: auto;">
+            <li><a href="/" class="nav-link {% if active_page == 'dashboard' %}active{% endif %}"><i class="fas fa-chart-line"></i><span>Dashboard HUD</span></a></li>
+            <li><a href="/tasks" class="nav-link {% if active_page == 'tasks' %}active{% endif %}"><i class="fas fa-check-double"></i><span>Tasks & Study</span></a></li>
+            <li><a href="/events" class="nav-link {% if active_page == 'events' %}active{% endif %}"><i class="fas fa-calendar-alt"></i><span>Events & Schedule</span></a></li>
+            <li><a href="/habits" class="nav-link {% if active_page == 'habits' %}active{% endif %}"><i class="fas fa-fire"></i><span>Habits & Hanuman Chalisa</span></a></li>
+            <li><a href="/notes" class="nav-link {% if active_page == 'notes' %}active{% endif %}"><i class="fas fa-sticky-note"></i><span>Subject Notes</span></a></li>
+            <li><a href="/results" class="nav-link {% if active_page == 'results' %}active{% endif %}"><i class="fas fa-graduation-cap"></i><span>Marks & Analytics</span></a></li>
+            <li><a href="/vault" class="nav-link {% if active_page == 'vault' %}active{% endif %}"><i class="fas fa-folder-open"></i><span>Subject PDF Vault</span></a></li>
+            <li><a href="/goals" class="nav-link {% if active_page == 'goals' %}active{% endif %}"><i class="fas fa-bullseye"></i><span>Academic Goals</span></a></li>
+            <li><a href="/focus" class="nav-link {% if active_page == 'focus' %}active{% endif %}"><i class="fas fa-atom"></i><span>Arc Focus Timer</span></a></li>
+        </ul>
+
+        <div style="padding-top: 12px; border-top: 1px solid rgba(0,242,254,0.15); margin-top: auto;">
+            <button class="hud-btn hud-btn-primary" style="width: 100%; justify-content: center; font-size: 0.82rem; margin-bottom: 8px;" onclick="openChalisaModal(); closeMobileDrawer();">
+                <i class="fas fa-om"></i> Read Hanuman Chalisa
+            </button>
+        </div>
+    </aside>
 
     <!-- Mobile Bottom Navigation Bar -->
     <nav class="mobile-bottom-nav">
@@ -171,14 +227,10 @@
             <i class="fas fa-fire"></i>
             <span>Habits</span>
         </a>
-        <a href="/vault" class="mobile-nav-item {% if active_page == 'vault' %}active{% endif %}">
-            <i class="fas fa-folder-open"></i>
-            <span>Vault</span>
-        </a>
-        <a href="/results" class="mobile-nav-item {% if active_page == 'results' %}active{% endif %}">
-            <i class="fas fa-graduation-cap"></i>
-            <span>Marks</span>
-        </a>
+        <button type="button" class="mobile-nav-item" onclick="openMobileDrawer()" style="background: none; border: none; cursor: pointer;">
+            <i class="fas fa-th-large"></i>
+            <span>All Hubs</span>
+        </button>
     </nav>
 
     <!-- Modal: Hanuman Chalisa Recitation Deck -->
